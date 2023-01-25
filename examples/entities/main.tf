@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     backstage = {
-      source  = "tdabasinskas/backstage"
+      source = "tdabasinskas/backstage"
     }
   }
 }
