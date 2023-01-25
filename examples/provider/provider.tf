@@ -1,3 +1,3 @@
-provider "scaffolding" {
-  # example configuration here
+provider "backstage" {
+  base_url = "https://demo.backstage.io"
 }
