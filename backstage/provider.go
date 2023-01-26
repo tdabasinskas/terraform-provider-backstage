@@ -133,6 +133,7 @@ func (p *backstageProvider) DataSources(context.Context) []func() datasource.Dat
 		NewLocationDataSource,
 		NewResourceDataSource,
 		NewSystemDataSource,
+		NewUserDataSource,
 	}
 }
 
