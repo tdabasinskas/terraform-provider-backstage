@@ -13,21 +13,21 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &domainDataSource{}
-	_ datasource.DataSourceWithConfigure = &domainDataSource{}
+	_ datasource.DataSource              = &locationDataSource{}
+	_ datasource.DataSourceWithConfigure = &locationDataSource{}
 )
 
-// NewDomainDataSource is a helper function to simplify the provider implementation.
-func NewDomainDataSource() datasource.DataSource {
-	return &domainDataSource{}
+// NewLocationDataSource is a helper function to simplify the provider implementation.
+func NewLocationDataSource() datasource.DataSource {
+	return &locationDataSource{}
 }
 
 // domainDataSource is the data source implementation.
-type domainDataSource struct {
+type locationDataSource struct {
 	client *backstage.Client
 }
 
-type domainDataSourceModel struct {
+type locationDataSourceModel struct {
 	ID         types.String          `tfsdk:"id"`
 	Name       types.String          `tfsdk:"name"`
 	Namespace  types.String          `tfsdk:"namespace"`
@@ -35,24 +35,33 @@ type domainDataSourceModel struct {
 	Kind       types.String          `tfsdk:"kind"`
 	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
 	Relations  []entityRelationModel `tfsdk:"relations"`
-	Spec       *domainSpecModel      `tfsdk:"spec"`
+	Spec       *locationSpecModel    `tfsdk:"spec"`
 }
 
-type domainSpecModel struct {
-	Owner types.String `tfsdk:"owner"`
+type locationSpecModel struct {
+	Type     types.String   `tfsdk:"type"`
+	Target   types.String   `tfsdk:"target"`
+	Targets  []types.String `tfsdk:"targets"`
+	Presence types.String   `tfsdk:"presence"`
 }
 
 const (
-	descriptionDomainSpecOwner = "An entity reference to the owner of the domain."
+	descriptionLocationSpecType = "The single location type, that's common to the targets specified in the spec. If it is left out, it is inherited from the location type " +
+		"that originally read the entity data."
+	descriptionLocationSpecTarget = "Target as a string. Can be either an absolute path/URL (depending on the type), or a relative path such as./details/catalog-info.yaml " +
+		"which is resolved relative to the location of this Location entity itself."
+	descriptionLocationSpecTargets = "A list of targets as strings. They can all be either absolute paths/URLs (depending on the type), or relative paths such as" +
+		"./details/catalog-info.yaml which are resolved relative to the location of this Location entity itself."
+	descriptionLocationSpecPresence = "Presence describes whether the presence of the location target is required and it should be considered an error if it can not be found."
 )
 
 // Metadata returns the data source type name.
-func (d *domainDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_domain"
+func (d *locationDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_location"
 }
 
 // Schema defines the schema for the data source.
-func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *locationDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id":          schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
@@ -92,14 +101,17 @@ func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 				},
 			}},
 			"spec": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
-				"owner": schema.StringAttribute{Computed: true, Description: descriptionDomainSpecOwner},
+				"type":     schema.StringAttribute{Computed: true, Description: descriptionLocationSpecType},
+				"target":   schema.StringAttribute{Computed: true, Description: descriptionLocationSpecTarget},
+				"targets":  schema.ListAttribute{Computed: true, Description: descriptionLocationSpecTargets, ElementType: types.StringType},
+				"presence": schema.StringAttribute{Computed: true, Description: descriptionLocationSpecPresence},
 			}},
 		},
 	}
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *domainDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+func (d *locationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -108,8 +120,8 @@ func (d *domainDataSource) Configure(_ context.Context, req datasource.Configure
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state domainDataSourceModel
+func (d *locationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state locationDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -120,29 +132,29 @@ func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		state.Namespace = types.StringValue(backstage.DefaultNamespaceName)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Getting Domain kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
-	domain, response, err := d.client.Catalog.Domains.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
+	tflog.Debug(ctx, fmt.Sprintf("Getting Location kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
+	location, response, err := d.client.Catalog.Locations.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error reading Backstage Domain kind",
-			fmt.Sprintf("Could not read Backstage Domain kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
+			"Error reading Backstage Location kind",
+			fmt.Sprintf("Could not read Backstage Location kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
 		)
 		return
 	}
 
 	if response.StatusCode != http.StatusOK {
 		resp.Diagnostics.AddError(
-			"Error reading Backstage Domain kind",
-			fmt.Sprintf("Could not read Backstage Domain kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
+			"Error reading Backstage Location kind",
+			fmt.Sprintf("Could not read Backstage Location kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
 		)
 		return
 	}
 
-	state.ID = types.StringValue(domain.Metadata.UID)
-	state.ApiVersion = types.StringValue(domain.ApiVersion)
-	state.Kind = types.StringValue(domain.Kind)
+	state.ID = types.StringValue(location.Metadata.UID)
+	state.ApiVersion = types.StringValue(location.ApiVersion)
+	state.Kind = types.StringValue(location.Kind)
 
-	for _, i := range domain.Relations {
+	for _, i := range location.Relations {
 		state.Relations = append(state.Relations, entityRelationModel{
 			Type:      types.StringValue(i.Type),
 			TargetRef: types.StringValue(i.TargetRef),
@@ -153,34 +165,40 @@ func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		})
 	}
 
-	state.Spec = &domainSpecModel{
-		Owner: types.StringValue(domain.Spec.Owner),
+	state.Spec = &locationSpecModel{
+		Type:     types.StringValue(location.Spec.Type),
+		Target:   types.StringValue(location.Spec.Target),
+		Presence: types.StringValue(location.Spec.Presence),
+	}
+
+	for _, i := range location.Spec.Targets {
+		state.Spec.Targets = append(state.Spec.Targets, types.StringValue(i))
 	}
 
 	state.Metadata = &entityMetadataModel{
-		UID:         types.StringValue(domain.Metadata.UID),
-		Etag:        types.StringValue(domain.Metadata.Etag),
-		Name:        types.StringValue(domain.Metadata.Name),
-		Namespace:   types.StringValue(domain.Metadata.Namespace),
-		Title:       types.StringValue(domain.Metadata.Title),
-		Description: types.StringValue(domain.Metadata.Description),
+		UID:         types.StringValue(location.Metadata.UID),
+		Etag:        types.StringValue(location.Metadata.Etag),
+		Name:        types.StringValue(location.Metadata.Name),
+		Namespace:   types.StringValue(location.Metadata.Namespace),
+		Title:       types.StringValue(location.Metadata.Title),
+		Description: types.StringValue(location.Metadata.Description),
 		Annotations: map[string]string{},
 		Labels:      map[string]string{},
 	}
 
-	for k, v := range domain.Metadata.Labels {
+	for k, v := range location.Metadata.Labels {
 		state.Metadata.Labels[k] = v
 	}
 
-	for k, v := range domain.Metadata.Annotations {
+	for k, v := range location.Metadata.Annotations {
 		state.Metadata.Annotations[k] = v
 	}
 
-	for _, v := range domain.Metadata.Tags {
+	for _, v := range location.Metadata.Tags {
 		state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
 	}
 
-	for _, v := range domain.Metadata.Links {
+	for _, v := range location.Metadata.Links {
 		state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
 			URL:   types.StringValue(v.URL),
 			Title: types.StringValue(v.Title),
