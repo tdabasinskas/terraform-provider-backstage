@@ -13,21 +13,21 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &apiDataSource{}
-	_ datasource.DataSourceWithConfigure = &apiDataSource{}
+	_ datasource.DataSource              = &componentDataSource{}
+	_ datasource.DataSourceWithConfigure = &componentDataSource{}
 )
 
-// NewApiDataSource is a helper function to simplify the provider implementation.
-func NewApiDataSource() datasource.DataSource {
-	return &apiDataSource{}
+// NewComponentDataSource is a helper function to simplify the provider implementation.
+func NewComponentDataSource() datasource.DataSource {
+	return &componentDataSource{}
 }
 
-// apiDataSource is the data source implementation.
-type apiDataSource struct {
+// componentDataSource is the data source implementation.
+type componentDataSource struct {
 	client *backstage.Client
 }
 
-type apiDataSourceModel struct {
+type componentDataSourceModel struct {
 	ID         types.String          `tfsdk:"id"`
 	Name       types.String          `tfsdk:"name"`
 	Namespace  types.String          `tfsdk:"namespace"`
@@ -35,64 +35,38 @@ type apiDataSourceModel struct {
 	Kind       types.String          `tfsdk:"kind"`
 	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
 	Relations  []entityRelationModel `tfsdk:"relations"`
-	Spec       *apiSpecModel         `tfsdk:"spec"`
+	Spec       *componentSpecModel   `tfsdk:"spec"`
 }
 
-type apiSpecModel struct {
-	Type       types.String `tfsdk:"type"`
-	Lifecycle  types.String `tfsdk:"lifecycle"`
-	Owner      types.String `tfsdk:"owner"`
-	Definition types.String `tfsdk:"definition"`
-	System     types.String `tfsdk:"system"`
+type componentSpecModel struct {
+	Type           types.String   `tfsdk:"type"`
+	Lifecycle      types.String   `tfsdk:"lifecycle"`
+	Owner          types.String   `tfsdk:"owner"`
+	SubcomponentOf types.String   `tfsdk:"subcomponent_of"`
+	ProvidesApis   []types.String `tfsdk:"provides_apis"`
+	ConsumesApis   []types.String `tfsdk:"consumes_apis"`
+	DependsOn      []types.String `tfsdk:"depends_on"`
+	System         types.String   `tfsdk:"system"`
 }
+
+const (
+	descriptionComponentSpecType           = "Type of the component definition."
+	descriptionComponentSpecLifecycle      = "Lifecycle state of the component."
+	descriptionComponentSpecOwner          = "An entity reference to the owner of the API"
+	descriptionComponentSpecSubcomponentOf = "An entity reference to another component of which the component is a part."
+	descriptionComponentSpecProvidesAPIs   = "An array of entity references to the APIs that are provided by the component."
+	descriptionComponentSpecConsumesAPIs   = "An array of entity references to the APIs that are consumed by the component."
+	descriptionComponentSpecDependsOn      = "An array of entity references to the components and resources that the component depends on."
+	descriptionComponentSpecSystem         = "An entity reference to the system that the API belongs to."
+)
 
 // Metadata returns the data source type name.
-func (d *apiDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_api"
+func (d *componentDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_component"
 }
 
-const (
-	descriptionEntitySpec              = "The specification data describing the entity itself."
-	descriptionEntityApiVersion        = "Version of specification format for this particular entity that this is written against."
-	descriptionEntityKind              = "The high level entity type being described."
-	descriptionEntityMetadata          = "Metadata fields common to all versions/kinds of entity."
-	descriptionEntityMetadataName      = "Name of the entity."
-	descriptionEntityMetadataNamespace = "Namespace that the entity belongs to."
-	descriptionEntityMetadataUID       = "A globally unique ID for the entity. This field can not be set by the user at creation time, and the server will reject an " +
-		"attempt to do so. The field will be populated in read operations."
-	descriptionEntityMetadataEtag = "An opaque string that changes for each update operation to any part of the entity, including metadata. This field can not be " +
-		"set by the user at creation time, and the server will reject an attempt to do so. The field will be populated in read operations.The field can (optionally) be " +
-		"specified when performing update or delete operations, and the server will then reject the operation if it does not match the current stored value."
-	descriptionEntityMetadataTitle       = "A display name of the entity, to be presented in user interfaces instead of the name property, when available."
-	descriptionEntityMetadataDescription = "A short (typically relatively few words) description of the entity."
-	descriptionEntityMetadataLabels      = "Key/Value pairs of identifying information attached to the entity."
-	descriptionEntityMetadataAnnotations = "Key/Value pairs of non-identifying auxiliary information attached to entity."
-	descriptionEntityMetadataTags        = "A list of single-valued strings, to for example classify catalog entities in various ways."
-	descriptionEntityMetadataLinks       = "A list of external hyperlinks related to the entity. Links can provide additional contextual information that may be " +
-		"located outside of Backstage itself. For example, an admin dashboard or external CMS page."
-	descriptionEntityLinkURL                 = "URL in a standard uri format."
-	descriptionEntityLinkTitle               = "A user-friendly display name for the link."
-	descriptionEntityLinkIco                 = "A key representing a visual icon to be displayed in the UI."
-	descriptionEntityLinkType                = "An optional value to categorize links into specific groups."
-	descriptionEntityRelations               = "Relations that this entity has with other entities"
-	descriptionEntityRelationType            = "Type of the relation."
-	descriptionEntityRelationTargetRef       = "The entity ref of the target of this relation."
-	descriptionEntityRelationTarget          = "The entity of the target of this relation."
-	descriptionEntityRelationTargetName      = "Name of the entity."
-	descriptionEntityRelationTargetKind      = "The high level entity type being described."
-	descriptionEntityRelationTargetNamespace = "Namespace that the target entity belongs to."
-)
-
-const (
-	descriptionApiSpecType       = "Type of the API definition."
-	descriptionApiSpecLifecycle  = "Lifecycle state of the API."
-	descriptionApiSpecOwner      = "An entity reference to the owner of the API"
-	descriptionApiSpecDefinition = "Definition of the API, based on the format defined by the type."
-	descriptionApiSpecSystem     = "An entity reference to the system that the API belongs to."
-)
-
 // Schema defines the schema for the data source.
-func (d *apiDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *componentDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id":          schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
@@ -132,18 +106,21 @@ func (d *apiDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				},
 			}},
 			"spec": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
-				"type":       schema.StringAttribute{Computed: true, Description: descriptionApiSpecType},
-				"lifecycle":  schema.StringAttribute{Computed: true, Description: descriptionApiSpecLifecycle},
-				"owner":      schema.StringAttribute{Computed: true, Description: descriptionApiSpecOwner},
-				"definition": schema.StringAttribute{Computed: true, Description: descriptionApiSpecDefinition},
-				"system":     schema.StringAttribute{Computed: true, Description: descriptionApiSpecSystem},
+				"type":            schema.StringAttribute{Computed: true, Description: descriptionComponentSpecType},
+				"lifecycle":       schema.StringAttribute{Computed: true, Description: descriptionComponentSpecLifecycle},
+				"owner":           schema.StringAttribute{Computed: true, Description: descriptionComponentSpecOwner},
+				"subcomponent_of": schema.StringAttribute{Computed: true, Description: descriptionComponentSpecSubcomponentOf},
+				"provides_apis":   schema.ListAttribute{Computed: true, Description: descriptionComponentSpecProvidesAPIs, ElementType: types.StringType},
+				"consumes_apis":   schema.ListAttribute{Computed: true, Description: descriptionComponentSpecConsumesAPIs, ElementType: types.StringType},
+				"depends_on":      schema.ListAttribute{Computed: true, Description: descriptionComponentSpecDependsOn, ElementType: types.StringType},
+				"system":          schema.StringAttribute{Computed: true, Description: descriptionComponentSpecSystem},
 			}},
 		},
 	}
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *apiDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+func (d *componentDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -152,8 +129,8 @@ func (d *apiDataSource) Configure(_ context.Context, req datasource.ConfigureReq
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *apiDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state apiDataSourceModel
+func (d *componentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state componentDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -164,12 +141,12 @@ func (d *apiDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		state.Namespace = types.StringValue(backstage.DefaultNamespaceName)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Getting API kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
-	api, response, err := d.client.Catalog.APIs.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
+	tflog.Debug(ctx, fmt.Sprintf("Getting Component kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
+	api, response, err := d.client.Catalog.Components.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading Backstage API kind",
-			fmt.Sprintf("Could not read Backstage API kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
+			fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
 		)
 		return
 	}
@@ -177,7 +154,7 @@ func (d *apiDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	if response.StatusCode != http.StatusOK {
 		resp.Diagnostics.AddError(
 			"Error reading Backstage API kind",
-			fmt.Sprintf("Could not read Backstage API kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
+			fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
 		)
 		return
 	}
@@ -197,12 +174,24 @@ func (d *apiDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		})
 	}
 
-	state.Spec = &apiSpecModel{
-		Type:       types.StringValue(api.Spec.Type),
-		Lifecycle:  types.StringValue(api.Spec.Lifecycle),
-		Owner:      types.StringValue(api.Spec.Owner),
-		Definition: types.StringValue(api.Spec.Definition),
-		System:     types.StringValue(api.Spec.System),
+	state.Spec = &componentSpecModel{
+		Type:           types.StringValue(api.Spec.Type),
+		Lifecycle:      types.StringValue(api.Spec.Lifecycle),
+		Owner:          types.StringValue(api.Spec.Owner),
+		SubcomponentOf: types.StringValue(api.Spec.SubcomponentOf),
+		System:         types.StringValue(api.Spec.System),
+	}
+
+	for _, i := range api.Spec.ProvidesApis {
+		state.Spec.ProvidesApis = append(state.Spec.ProvidesApis, types.StringValue(i))
+	}
+
+	for _, i := range api.Spec.ConsumesApis {
+		state.Spec.ConsumesApis = append(state.Spec.ConsumesApis, types.StringValue(i))
+	}
+
+	for _, i := range api.Spec.DependsOn {
+		state.Spec.DependsOn = append(state.Spec.DependsOn, types.StringValue(i))
 	}
 
 	state.Metadata = &entityMetadataModel{

@@ -128,6 +128,7 @@ func (p *backstageProvider) Resources(context.Context) []func() resource.Resourc
 func (p *backstageProvider) DataSources(context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewApiDataSource,
+		NewComponentDataSource,
 	}
 }
 
