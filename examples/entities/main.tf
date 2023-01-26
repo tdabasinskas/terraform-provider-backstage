@@ -10,10 +10,13 @@ provider "backstage" {
   base_url = "https://demo.backstage.io"
 }
 
-data "backstage_component" "test" {
-  name = "shuffle-api"
+data "backstage_entities" "test" {
+  filters = {
+    "kind"               = "User",
+    "metadata.namespace" = "default",
+  }
 }
 
 output "streetlights" {
-  value = data.backstage_component.test
+  value = data.backstage_entities.test
 }

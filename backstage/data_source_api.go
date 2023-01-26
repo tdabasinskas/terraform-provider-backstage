@@ -52,38 +52,6 @@ func (d *apiDataSource) Metadata(_ context.Context, req datasource.MetadataReque
 }
 
 const (
-	descriptionEntitySpec              = "The specification data describing the entity itself."
-	descriptionEntityApiVersion        = "Version of specification format for this particular entity that this is written against."
-	descriptionEntityKind              = "The high level entity type being described."
-	descriptionEntityMetadata          = "Metadata fields common to all versions/kinds of entity."
-	descriptionEntityMetadataName      = "Name of the entity."
-	descriptionEntityMetadataNamespace = "Namespace that the entity belongs to."
-	descriptionEntityMetadataUID       = "A globally unique ID for the entity. This field can not be set by the user at creation time, and the server will reject an " +
-		"attempt to do so. The field will be populated in read operations."
-	descriptionEntityMetadataEtag = "An opaque string that changes for each update operation to any part of the entity, including metadata. This field can not be " +
-		"set by the user at creation time, and the server will reject an attempt to do so. The field will be populated in read operations.The field can (optionally) be " +
-		"specified when performing update or delete operations, and the server will then reject the operation if it does not match the current stored value."
-	descriptionEntityMetadataTitle       = "A display name of the entity, to be presented in user interfaces instead of the name property, when available."
-	descriptionEntityMetadataDescription = "A short (typically relatively few words) description of the entity."
-	descriptionEntityMetadataLabels      = "Key/Value pairs of identifying information attached to the entity."
-	descriptionEntityMetadataAnnotations = "Key/Value pairs of non-identifying auxiliary information attached to entity."
-	descriptionEntityMetadataTags        = "A list of single-valued strings, to for example classify catalog entities in various ways."
-	descriptionEntityMetadataLinks       = "A list of external hyperlinks related to the entity. Links can provide additional contextual information that may be " +
-		"located outside of Backstage itself. For example, an admin dashboard or external CMS page."
-	descriptionEntityLinkURL                 = "URL in a standard uri format."
-	descriptionEntityLinkTitle               = "A user-friendly display name for the link."
-	descriptionEntityLinkIco                 = "A key representing a visual icon to be displayed in the UI."
-	descriptionEntityLinkType                = "An optional value to categorize links into specific groups."
-	descriptionEntityRelations               = "Relations that this entity has with other entities"
-	descriptionEntityRelationType            = "Type of the relation."
-	descriptionEntityRelationTargetRef       = "The entity ref of the target of this relation."
-	descriptionEntityRelationTarget          = "The entity of the target of this relation."
-	descriptionEntityRelationTargetName      = "Name of the entity."
-	descriptionEntityRelationTargetKind      = "The high level entity type being described."
-	descriptionEntityRelationTargetNamespace = "Namespace that the target entity belongs to."
-)
-
-const (
 	descriptionApiSpecType       = "Type of the API definition."
 	descriptionApiSpecLifecycle  = "Lifecycle state of the API."
 	descriptionApiSpecOwner      = "An entity reference to the owner of the API"
