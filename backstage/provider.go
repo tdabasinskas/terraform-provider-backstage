@@ -3,12 +3,15 @@ package backstage
 import (
 	"context"
 	"fmt"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/tdabasinskas/go-backstage/backstage"
@@ -48,8 +51,19 @@ func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 			"Interested in the provider's latest features, or want to make sure you're up to date? Check out the " +
 			"[releases](https://github.com/tdabasinskas/terraform-provider-backstage/releases) for version information and release notes.",
 		Attributes: map[string]schema.Attribute{
-			"base_url":          schema.StringAttribute{Required: true, Description: descriptionProviderBaseURL},
-			"default_namespace": schema.StringAttribute{Optional: true, Description: descriptionProviderDefaultNamespace},
+			"base_url": schema.StringAttribute{Required: true, Description: descriptionProviderBaseURL, Validators: []validator.String{
+				stringvalidator.RegexMatches(
+					regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)`),
+					"must be a valid URL",
+				),
+			}},
+			"default_namespace": schema.StringAttribute{Optional: true, Description: descriptionProviderDefaultNamespace, Validators: []validator.String{
+				stringvalidator.LengthBetween(1, 63),
+				stringvalidator.RegexMatches(
+					regexp.MustCompile(patternEntityName),
+					"must follow Backstage format restrictions",
+				),
+			}},
 		},
 	}
 }

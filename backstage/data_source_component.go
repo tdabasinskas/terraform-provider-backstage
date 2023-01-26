@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/tdabasinskas/go-backstage/backstage"
@@ -71,9 +74,21 @@ func (d *componentDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 		MarkdownDescription: "Use this data source to get a specific " +
 			"[Component entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-component) from Backstage Software Catalog.",
 		Attributes: map[string]schema.Attribute{
-			"id":          schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
-			"name":        schema.StringAttribute{Required: true, Description: descriptionEntityMetadataName},
-			"namespace":   schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace},
+			"id": schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
+			"name": schema.StringAttribute{Required: true, Description: descriptionEntityMetadataName, Validators: []validator.String{
+				stringvalidator.LengthBetween(1, 63),
+				stringvalidator.RegexMatches(
+					regexp.MustCompile(patternEntityName),
+					"must follow Backstage format restrictions",
+				),
+			}},
+			"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace, Validators: []validator.String{
+				stringvalidator.LengthBetween(1, 63),
+				stringvalidator.RegexMatches(
+					regexp.MustCompile(patternEntityName),
+					"must follow Backstage format restrictions",
+				),
+			}},
 			"api_version": schema.StringAttribute{Computed: true, Description: descriptionEntityApiVersion},
 			"kind":        schema.StringAttribute{Computed: true, Description: descriptionEntityKind},
 			"metadata": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{

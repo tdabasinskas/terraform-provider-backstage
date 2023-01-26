@@ -73,6 +73,7 @@ type entityLinkModel struct {
 }
 
 const (
+	patternEntityName                  = `^[a-zA-Z0-9\-_\.]*$`
 	descriptionEntityFilters           = "A set of conditions that can be used to filter entities."
 	descriptionEntitySpec              = "The specification data describing the entity itself."
 	descriptionEntityApiVersion        = "Version of specification format for this particular entity that this is written against."
