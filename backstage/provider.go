@@ -44,7 +44,7 @@ func (p *backstageProvider) Metadata(_ context.Context, _ provider.MetadataReque
 // Schema defines the provider-level schema for configuration data.
 func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Use Backstage provider to interact with the resources supported by [Backstage](https://backstage.io)." +
+		MarkdownDescription: "Use Backstage provider to interact with the resources supported by [Backstage](https://backstage.io). " +
 			"You must configure the provider with proper base URL of your Backstage instance before you can use it.\n\n" +
 			"Use the navigation on the left to read about the available resources and data sources.\n\n To learn the basic of Terraform using this provider, " +
 			"follow hands-on [get started tutorials](https://learn.hashicorp.com/tutorials/terraform/infrastructure-as-code).\n\n" +
