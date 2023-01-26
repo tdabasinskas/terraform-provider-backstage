@@ -3,12 +3,12 @@
 page_title: "backstage_group Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific Group entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group from Backstage Software Catalog.
 ---
 
 # backstage_group (Data Source)
 
-
+Use this data source to get a specific [Group entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-group) from Backstage Software Catalog.
 
 ## Example Usage
 

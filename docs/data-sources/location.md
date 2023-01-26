@@ -3,12 +3,12 @@
 page_title: "backstage_location Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific Location entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-location from Backstage Software Catalog.
 ---
 
 # backstage_location (Data Source)
 
-
+Use this data source to get a specific [Location entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-location) from Backstage Software Catalog.
 
 ## Example Usage
 

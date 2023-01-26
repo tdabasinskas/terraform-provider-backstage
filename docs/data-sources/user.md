@@ -3,12 +3,12 @@
 page_title: "backstage_user Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific User entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-user from Backstage Software Catalog.
 ---
 
 # backstage_user (Data Source)
 
-
+Use this data source to get a specific [User entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-user) from Backstage Software Catalog.
 
 ## Example Usage
 

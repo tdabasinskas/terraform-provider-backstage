@@ -3,12 +3,12 @@
 page_title: "backstage_system Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific System entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-system from Backstage Software Catalog.
 ---
 
 # backstage_system (Data Source)
 
-
+Use this data source to get a specific [System entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-system) from Backstage Software Catalog.
 
 ## Example Usage
 

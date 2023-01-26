@@ -113,7 +113,10 @@ func (d *entityDataSource) Metadata(_ context.Context, req datasource.MetadataRe
 // Schema defines the schema for the data source.
 func (d *entityDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "adsd",
+		MarkdownDescription: "Use this data source to get a filtered list of " +
+			"[entities](https://backstage.io/docs/features/software-catalog/descriptor-format#overall-shape-of-an-entity) from Backstage Software Catalog. For more " +
+			"information about the way filters are defined and applied, see " +
+			"[Backstage documentation](https://backstage.io/docs/features/software-catalog/software-catalog-api#filtering).",
 		Attributes: map[string]schema.Attribute{
 			"id":      schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
 			"filters": schema.MapAttribute{Required: true, Description: descriptionEntityFilters, ElementType: types.StringType},

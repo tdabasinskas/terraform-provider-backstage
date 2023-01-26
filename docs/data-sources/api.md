@@ -3,19 +3,19 @@
 page_title: "backstage_api Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific API entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-api from Backstage Software Catalog.
 ---
 
 # backstage_api (Data Source)
 
-
+Use this data source to get a specific [API entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-api) from Backstage Software Catalog.
 
 ## Example Usage
 
 ```terraform
-# Retrieves specific api data:
+# Retrieves specific API data:
 data "backstage_api" "example" {
-  # Required name of the api:
+  # Required name of the API:
   name = "example-api"
   # If not provided, namespace defaults to "default" or the the one set in the provider:
   namespace = "example-namespace"

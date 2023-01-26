@@ -3,12 +3,12 @@
 page_title: "backstage_entities Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  adsd
+  Use this data source to get a filtered list of entities https://backstage.io/docs/features/software-catalog/descriptor-format#overall-shape-of-an-entity from Backstage Software Catalog. For more information about the way filters are defined and applied, see Backstage documentation https://backstage.io/docs/features/software-catalog/software-catalog-api#filtering.
 ---
 
 # backstage_entities (Data Source)
 
-adsd
+Use this data source to get a filtered list of [entities](https://backstage.io/docs/features/software-catalog/descriptor-format#overall-shape-of-an-entity) from Backstage Software Catalog. For more information about the way filters are defined and applied, see [Backstage documentation](https://backstage.io/docs/features/software-catalog/software-catalog-api#filtering).
 
 ## Example Usage
 

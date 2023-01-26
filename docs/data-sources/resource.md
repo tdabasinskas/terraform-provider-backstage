@@ -3,12 +3,12 @@
 page_title: "backstage_resource Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific Resource entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-resource from Backstage Software Catalog.
 ---
 
 # backstage_resource (Data Source)
 
-
+Use this data source to get a specific [Resource entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-resource) from Backstage Software Catalog.
 
 ## Example Usage
 

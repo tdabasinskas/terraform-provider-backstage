@@ -60,6 +60,8 @@ func (d *resourceDataSource) Metadata(_ context.Context, req datasource.Metadata
 // Schema defines the schema for the data source.
 func (d *resourceDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "Use this data source to get a specific " +
+			"[Resource entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-resource) from Backstage Software Catalog.",
 		Attributes: map[string]schema.Attribute{
 			"id":          schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
 			"name":        schema.StringAttribute{Required: true, Description: descriptionEntityMetadataName},

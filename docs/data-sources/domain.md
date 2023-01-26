@@ -3,12 +3,12 @@
 page_title: "backstage_domain Data Source - terraform-provider-backstage"
 subcategory: ""
 description: |-
-  
+  Use this data source to get a specific Domain entity https://backstage.io/docs/features/software-catalog/descriptor-format#kind-domain from Backstage Software Catalog.
 ---
 
 # backstage_domain (Data Source)
 
-
+Use this data source to get a specific [Domain entity](https://backstage.io/docs/features/software-catalog/descriptor-format#kind-domain) from Backstage Software Catalog.
 
 ## Example Usage
 
