@@ -2,14 +2,13 @@
 
 [![Tests](https://github.com/tdabasinskas/terraform-provider-backstage/actions/workflows/test.yml/badge.svg)](https://github.com/tdabasinskas/terraform-provider-backstage/actions/workflows/test.yml)
 [![go-github release (latest SemVer)](https://img.shields.io/github/v/release/tdabasinskas/terraform-provider-backstage?sort=semver)](https://github.com/tdabasinskas/terraform-provider-backstage/releases)
-[![registry](https://img.shields.io/static/v1?label=terraform&message=registry&color=blueviolet)](https://registry.terraform.io/providers/tdabasinskas/terraform-provider-backstage/latest)
+[![registry](https://img.shields.io/static/v1?label=terraform&message=registry&color=blueviolet)](https://registry.terraform.io/providers/tdabasinskas/backstage/latest)
 
-The [Backstage Provider](https://registry.terraform.io/providers/tdabasinskas/terraform-provider-backstage/latest) allows [Terraform](https://terraform.io/) to
-manage [Backstage](https://backstage.io) resources.
+The [Backstage Provider](https://registry.terraform.io/providers/tdabasinskas/backstage/latest) allows [Terraform](https://terraform.io/) to  manage [Backstage](https://backstage.io) resources.
 
 ## Documentation
 
-Official documentation on how to use this provider can be found on the [Terraform Registry](https://registry.terraform.io/providers/tdabasinskas/terraform-provider-backstage/latest).
+Official documentation on how to use this provider can be found on the [Terraform Registry](https://registry.terraform.io/providers/tdabasinskas/backstage/latest).
 In case of specific questions, please raise a GitHub issue in this repository.
 
 The remainder of this document will focus on the development aspects of the provider.
