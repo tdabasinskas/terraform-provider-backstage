@@ -13,21 +13,21 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &componentDataSource{}
-	_ datasource.DataSourceWithConfigure = &componentDataSource{}
+	_ datasource.DataSource              = &domainDataSource{}
+	_ datasource.DataSourceWithConfigure = &domainDataSource{}
 )
 
-// NewComponentDataSource is a helper function to simplify the provider implementation.
-func NewComponentDataSource() datasource.DataSource {
-	return &componentDataSource{}
+// NewDomainDataSource is a helper function to simplify the provider implementation.
+func NewDomainDataSource() datasource.DataSource {
+	return &domainDataSource{}
 }
 
-// componentDataSource is the data source implementation.
-type componentDataSource struct {
+// domainDataSource is the data source implementation.
+type domainDataSource struct {
 	client *backstage.Client
 }
 
-type componentDataSourceModel struct {
+type domainDataSourceModel struct {
 	ID         types.String          `tfsdk:"id"`
 	Name       types.String          `tfsdk:"name"`
 	Namespace  types.String          `tfsdk:"namespace"`
@@ -35,38 +35,24 @@ type componentDataSourceModel struct {
 	Kind       types.String          `tfsdk:"kind"`
 	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
 	Relations  []entityRelationModel `tfsdk:"relations"`
-	Spec       *componentSpecModel   `tfsdk:"spec"`
+	Spec       *domainSpecModel      `tfsdk:"spec"`
 }
 
-type componentSpecModel struct {
-	Type           types.String   `tfsdk:"type"`
-	Lifecycle      types.String   `tfsdk:"lifecycle"`
-	Owner          types.String   `tfsdk:"owner"`
-	SubcomponentOf types.String   `tfsdk:"subcomponent_of"`
-	ProvidesApis   []types.String `tfsdk:"provides_apis"`
-	ConsumesApis   []types.String `tfsdk:"consumes_apis"`
-	DependsOn      []types.String `tfsdk:"depends_on"`
-	System         types.String   `tfsdk:"system"`
+type domainSpecModel struct {
+	Owner types.String `tfsdk:"owner"`
 }
 
 const (
-	descriptionComponentSpecType           = "Type of the component definition."
-	descriptionComponentSpecLifecycle      = "Lifecycle state of the component."
-	descriptionComponentSpecOwner          = "An entity reference to the owner of the component"
-	descriptionComponentSpecSubcomponentOf = "An entity reference to another component of which the component is a part."
-	descriptionComponentSpecProvidesAPIs   = "An array of entity references to the APIs that are provided by the component."
-	descriptionComponentSpecConsumesAPIs   = "An array of entity references to the APIs that are consumed by the component."
-	descriptionComponentSpecDependsOn      = "An array of entity references to the components and resources that the component depends on."
-	descriptionComponentSpecSystem         = "An entity reference to the system that the component belongs to."
+	descriptionDomainSpecOwner = "An entity reference to the owner of the domain"
 )
 
 // Metadata returns the data source type name.
-func (d *componentDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_component"
+func (d *domainDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_domain"
 }
 
 // Schema defines the schema for the data source.
-func (d *componentDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *domainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id":          schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
@@ -106,21 +92,14 @@ func (d *componentDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				},
 			}},
 			"spec": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
-				"type":            schema.StringAttribute{Computed: true, Description: descriptionComponentSpecType},
-				"lifecycle":       schema.StringAttribute{Computed: true, Description: descriptionComponentSpecLifecycle},
-				"owner":           schema.StringAttribute{Computed: true, Description: descriptionComponentSpecOwner},
-				"subcomponent_of": schema.StringAttribute{Computed: true, Description: descriptionComponentSpecSubcomponentOf},
-				"provides_apis":   schema.ListAttribute{Computed: true, Description: descriptionComponentSpecProvidesAPIs, ElementType: types.StringType},
-				"consumes_apis":   schema.ListAttribute{Computed: true, Description: descriptionComponentSpecConsumesAPIs, ElementType: types.StringType},
-				"depends_on":      schema.ListAttribute{Computed: true, Description: descriptionComponentSpecDependsOn, ElementType: types.StringType},
-				"system":          schema.StringAttribute{Computed: true, Description: descriptionComponentSpecSystem},
+				"owner": schema.StringAttribute{Computed: true, Description: descriptionDomainSpecOwner},
 			}},
 		},
 	}
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *componentDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+func (d *domainDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -129,8 +108,8 @@ func (d *componentDataSource) Configure(_ context.Context, req datasource.Config
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *componentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state componentDataSourceModel
+func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state domainDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -141,29 +120,29 @@ func (d *componentDataSource) Read(ctx context.Context, req datasource.ReadReque
 		state.Namespace = types.StringValue(backstage.DefaultNamespaceName)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Getting Component kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
-	component, response, err := d.client.Catalog.Components.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
+	tflog.Debug(ctx, fmt.Sprintf("Getting Domain kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
+	domain, response, err := d.client.Catalog.Domains.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error reading Backstage Component kind",
-			fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
+			"Error reading Backstage Domain kind",
+			fmt.Sprintf("Could not read Backstage Domain kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
 		)
 		return
 	}
 
 	if response.StatusCode != http.StatusOK {
 		resp.Diagnostics.AddError(
-			"Error reading Backstage Component kind",
-			fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
+			"Error reading Backstage Domain kind",
+			fmt.Sprintf("Could not read Backstage Domain kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
 		)
 		return
 	}
 
-	state.ID = types.StringValue(component.Metadata.UID)
-	state.ApiVersion = types.StringValue(component.ApiVersion)
-	state.Kind = types.StringValue(component.Kind)
+	state.ID = types.StringValue(domain.Metadata.UID)
+	state.ApiVersion = types.StringValue(domain.ApiVersion)
+	state.Kind = types.StringValue(domain.Kind)
 
-	for _, i := range component.Relations {
+	for _, i := range domain.Relations {
 		state.Relations = append(state.Relations, entityRelationModel{
 			Type:      types.StringValue(i.Type),
 			TargetRef: types.StringValue(i.TargetRef),
@@ -174,50 +153,34 @@ func (d *componentDataSource) Read(ctx context.Context, req datasource.ReadReque
 		})
 	}
 
-	state.Spec = &componentSpecModel{
-		Type:           types.StringValue(component.Spec.Type),
-		Lifecycle:      types.StringValue(component.Spec.Lifecycle),
-		Owner:          types.StringValue(component.Spec.Owner),
-		SubcomponentOf: types.StringValue(component.Spec.SubcomponentOf),
-		System:         types.StringValue(component.Spec.System),
-	}
-
-	for _, i := range component.Spec.ProvidesApis {
-		state.Spec.ProvidesApis = append(state.Spec.ProvidesApis, types.StringValue(i))
-	}
-
-	for _, i := range component.Spec.ConsumesApis {
-		state.Spec.ConsumesApis = append(state.Spec.ConsumesApis, types.StringValue(i))
-	}
-
-	for _, i := range component.Spec.DependsOn {
-		state.Spec.DependsOn = append(state.Spec.DependsOn, types.StringValue(i))
+	state.Spec = &domainSpecModel{
+		Owner: types.StringValue(domain.Spec.Owner),
 	}
 
 	state.Metadata = &entityMetadataModel{
-		UID:         types.StringValue(component.Metadata.UID),
-		Etag:        types.StringValue(component.Metadata.Etag),
-		Name:        types.StringValue(component.Metadata.Name),
-		Namespace:   types.StringValue(component.Metadata.Namespace),
-		Title:       types.StringValue(component.Metadata.Title),
-		Description: types.StringValue(component.Metadata.Description),
+		UID:         types.StringValue(domain.Metadata.UID),
+		Etag:        types.StringValue(domain.Metadata.Etag),
+		Name:        types.StringValue(domain.Metadata.Name),
+		Namespace:   types.StringValue(domain.Metadata.Namespace),
+		Title:       types.StringValue(domain.Metadata.Title),
+		Description: types.StringValue(domain.Metadata.Description),
 		Annotations: map[string]string{},
 		Labels:      map[string]string{},
 	}
 
-	for k, v := range component.Metadata.Labels {
+	for k, v := range domain.Metadata.Labels {
 		state.Metadata.Labels[k] = v
 	}
 
-	for k, v := range component.Metadata.Annotations {
+	for k, v := range domain.Metadata.Annotations {
 		state.Metadata.Annotations[k] = v
 	}
 
-	for _, v := range component.Metadata.Tags {
+	for _, v := range domain.Metadata.Tags {
 		state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
 	}
 
-	for _, v := range component.Metadata.Links {
+	for _, v := range domain.Metadata.Links {
 		state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
 			URL:   types.StringValue(v.URL),
 			Title: types.StringValue(v.Title),
