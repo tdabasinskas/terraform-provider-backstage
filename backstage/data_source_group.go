@@ -13,21 +13,21 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &userDataSource{}
-	_ datasource.DataSourceWithConfigure = &userDataSource{}
+	_ datasource.DataSource              = &groupDataSource{}
+	_ datasource.DataSourceWithConfigure = &groupDataSource{}
 )
 
-// NewUserDataSource is a helper function to simplify the provider implementation.
-func NewUserDataSource() datasource.DataSource {
-	return &userDataSource{}
+// NewGroupDataSource is a helper function to simplify the provider implementation.
+func NewGroupDataSource() datasource.DataSource {
+	return &groupDataSource{}
 }
 
-// userDataSource is the data source implementation.
-type userDataSource struct {
+// groupDataSource is the data source implementation.
+type groupDataSource struct {
 	client *backstage.Client
 }
 
-type userDataSourceModel struct {
+type groupDataSourceModel struct {
 	ID         types.String          `tfsdk:"id"`
 	Name       types.String          `tfsdk:"name"`
 	Namespace  types.String          `tfsdk:"namespace"`
@@ -35,35 +35,41 @@ type userDataSourceModel struct {
 	Kind       types.String          `tfsdk:"kind"`
 	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
 	Relations  []entityRelationModel `tfsdk:"relations"`
-	Spec       *userSpecModel        `tfsdk:"spec"`
+	Spec       *groupSpecModel       `tfsdk:"spec"`
 }
 
-type userSpecModel struct {
-	Profile  *userSpecProfileModel `tfsdk:"profile"`
-	MemberOf []types.String        `tfsdk:"member_of"`
+type groupSpecModel struct {
+	Type     types.String           `tfsdk:"type"`
+	Profile  *groupSpecProfileModel `tfsdk:"profile"`
+	Parent   types.String           `tfsdk:"parent"`
+	Children []types.String         `tfsdk:"children"`
+	Members  []types.String         `tfsdk:"members"`
 }
 
-type userSpecProfileModel struct {
+type groupSpecProfileModel struct {
 	DisplayName types.String `tfsdk:"display_name"`
 	Email       types.String `tfsdk:"email"`
 	Picture     types.String `tfsdk:"picture"`
 }
 
 const (
-	descriptionUserSpecProfile            = "Profile information about the user, mainly for display purposes."
-	descriptionUserSpecProfileDisplayName = "A simple display name to present to users."
-	descriptionUserSpecProfileEmail       = "Email where this user can be reached."
-	descriptionUserSpecProfilePicture     = "A URL of an image that represents this user."
-	descriptionUserSpecMemberOf           = "The list of groups that the user is a direct member of (i.e., no transitive memberships are listed here)."
+	descriptionGroupType                   = "The type of group."
+	descriptionGroupSpecProfile            = "Profile information about the group, mainly for display purposes."
+	descriptionGroupSpecProfileDisplayName = "A simple display name to present to users."
+	descriptionGroupSpecProfileEmail       = "Email where this entity can be reached."
+	descriptionGroupSpecProfilePicture     = "A URL of an image that represents this entity."
+	descriptionGroupSpecParent             = "Parent is the immediate parent group in the hierarchy, if any."
+	descriptionGroupSpecChildren           = "Children contains immediate child groups of this group in the hierarchy (whose parent field points to this group)."
+	descriptionGroupSpecMembers            = "Members contains the users that are members of this group."
 )
 
 // Metadata returns the data source type name.
-func (d *userDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_user"
+func (d *groupDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_group"
 }
 
 // Schema defines the schema for the data source.
-func (d *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *groupDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id":          schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
@@ -103,11 +109,14 @@ func (d *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 				},
 			}},
 			"spec": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
-				"member_of": schema.ListAttribute{Computed: true, Description: descriptionUserSpecMemberOf, ElementType: types.StringType},
-				"profile": schema.SingleNestedAttribute{Computed: true, Description: descriptionUserSpecProfile, Attributes: map[string]schema.Attribute{
-					"display_name": schema.StringAttribute{Computed: true, Description: descriptionUserSpecProfileDisplayName},
-					"email":        schema.StringAttribute{Computed: true, Description: descriptionUserSpecProfileEmail},
-					"picture":      schema.StringAttribute{Computed: true, Description: descriptionUserSpecProfilePicture},
+				"type":     schema.StringAttribute{Computed: true, Description: descriptionGroupType},
+				"parent":   schema.StringAttribute{Computed: true, Description: descriptionGroupSpecParent},
+				"children": schema.ListAttribute{Computed: true, Description: descriptionGroupSpecChildren, ElementType: types.StringType},
+				"members":  schema.ListAttribute{Computed: true, Description: descriptionGroupSpecMembers, ElementType: types.StringType},
+				"profile": schema.SingleNestedAttribute{Computed: true, Description: descriptionGroupSpecProfile, Attributes: map[string]schema.Attribute{
+					"display_name": schema.StringAttribute{Computed: true, Description: descriptionGroupSpecProfileDisplayName},
+					"email":        schema.StringAttribute{Computed: true, Description: descriptionGroupSpecProfileEmail},
+					"picture":      schema.StringAttribute{Computed: true, Description: descriptionGroupSpecProfilePicture},
 				}},
 			}},
 		},
@@ -115,7 +124,7 @@ func (d *userDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *userDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+func (d *groupDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -124,8 +133,8 @@ func (d *userDataSource) Configure(_ context.Context, req datasource.ConfigureRe
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var state userDataSourceModel
+func (d *groupDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var state groupDataSourceModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
@@ -136,29 +145,29 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		state.Namespace = types.StringValue(backstage.DefaultNamespaceName)
 	}
 
-	tflog.Debug(ctx, fmt.Sprintf("Getting User kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
-	user, response, err := d.client.Catalog.Users.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
+	tflog.Debug(ctx, fmt.Sprintf("Getting Group kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
+	group, response, err := d.client.Catalog.Groups.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error reading Backstage User kind",
-			fmt.Sprintf("Could not read Backstage User kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
+			"Error reading Backstage Group kind",
+			fmt.Sprintf("Could not read Backstage Group kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
 		)
 		return
 	}
 
 	if response.StatusCode != http.StatusOK {
 		resp.Diagnostics.AddError(
-			"Error reading Backstage User kind",
-			fmt.Sprintf("Could not read Backstage User kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
+			"Error reading Backstage Group kind",
+			fmt.Sprintf("Could not read Backstage Group kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
 		)
 		return
 	}
 
-	state.ID = types.StringValue(user.Metadata.UID)
-	state.ApiVersion = types.StringValue(user.ApiVersion)
-	state.Kind = types.StringValue(user.Kind)
+	state.ID = types.StringValue(group.Metadata.UID)
+	state.ApiVersion = types.StringValue(group.ApiVersion)
+	state.Kind = types.StringValue(group.Kind)
 
-	for _, i := range user.Relations {
+	for _, i := range group.Relations {
 		state.Relations = append(state.Relations, entityRelationModel{
 			Type:      types.StringValue(i.Type),
 			TargetRef: types.StringValue(i.TargetRef),
@@ -169,42 +178,48 @@ func (d *userDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		})
 	}
 
-	state.Spec = &userSpecModel{
-		Profile: &userSpecProfileModel{
-			DisplayName: types.StringValue(user.Spec.Profile.DisplayName),
-			Email:       types.StringValue(user.Spec.Profile.Email),
-			Picture:     types.StringValue(user.Spec.Profile.Picture),
+	state.Spec = &groupSpecModel{
+		Type:   types.StringValue(group.Spec.Type),
+		Parent: types.StringValue(group.Spec.Parent),
+		Profile: &groupSpecProfileModel{
+			DisplayName: types.StringValue(group.Spec.Profile.DisplayName),
+			Email:       types.StringValue(group.Spec.Profile.Email),
+			Picture:     types.StringValue(group.Spec.Profile.Picture),
 		},
 	}
 
-	for _, i := range user.Spec.MemberOf {
-		state.Spec.MemberOf = append(state.Spec.MemberOf, types.StringValue(i))
+	for _, i := range group.Spec.Children {
+		state.Spec.Children = append(state.Spec.Children, types.StringValue(i))
+	}
+
+	for _, i := range group.Spec.Members {
+		state.Spec.Members = append(state.Spec.Members, types.StringValue(i))
 	}
 
 	state.Metadata = &entityMetadataModel{
-		UID:         types.StringValue(user.Metadata.UID),
-		Etag:        types.StringValue(user.Metadata.Etag),
-		Name:        types.StringValue(user.Metadata.Name),
-		Namespace:   types.StringValue(user.Metadata.Namespace),
-		Title:       types.StringValue(user.Metadata.Title),
-		Description: types.StringValue(user.Metadata.Description),
+		UID:         types.StringValue(group.Metadata.UID),
+		Etag:        types.StringValue(group.Metadata.Etag),
+		Name:        types.StringValue(group.Metadata.Name),
+		Namespace:   types.StringValue(group.Metadata.Namespace),
+		Title:       types.StringValue(group.Metadata.Title),
+		Description: types.StringValue(group.Metadata.Description),
 		Annotations: map[string]string{},
 		Labels:      map[string]string{},
 	}
 
-	for k, v := range user.Metadata.Labels {
+	for k, v := range group.Metadata.Labels {
 		state.Metadata.Labels[k] = v
 	}
 
-	for k, v := range user.Metadata.Annotations {
+	for k, v := range group.Metadata.Annotations {
 		state.Metadata.Annotations[k] = v
 	}
 
-	for _, v := range user.Metadata.Tags {
+	for _, v := range group.Metadata.Tags {
 		state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
 	}
 
-	for _, v := range user.Metadata.Links {
+	for _, v := range group.Metadata.Links {
 		state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
 			URL:   types.StringValue(v.URL),
 			Title: types.StringValue(v.Title),

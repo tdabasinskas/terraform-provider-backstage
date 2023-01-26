@@ -22,7 +22,7 @@ func NewLocationDataSource() datasource.DataSource {
 	return &locationDataSource{}
 }
 
-// domainDataSource is the data source implementation.
+// locationDataSource is the data source implementation.
 type locationDataSource struct {
 	client *backstage.Client
 }

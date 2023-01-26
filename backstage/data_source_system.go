@@ -22,7 +22,7 @@ func NewSystemDataSource() datasource.DataSource {
 	return &systemDataSource{}
 }
 
-// resourceDataSource is the data source implementation.
+// systemDataSource is the data source implementation.
 type systemDataSource struct {
 	client *backstage.Client
 }
