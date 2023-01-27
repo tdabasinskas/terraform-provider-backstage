@@ -77,7 +77,7 @@ jobs:
       - run: go mod download
       - env:
           TF_ACC: "1"
-          ACCTEST_SKIP_RESOURCE_LOCATION: "1"
+          ACCTEST_SKIP_RESOURCE_TEST: "1"
           BACKSTAGE_BASE_URL: "https://demo.backstage.io"
         run: go test -v -cover ./backstage
         timeout-minutes: 10

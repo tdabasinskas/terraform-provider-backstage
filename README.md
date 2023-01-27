@@ -23,6 +23,7 @@ most of the official documentation on developing this provider is also applicabl
 - [Terraform](https://www.terraform.io/downloads)
 - [Go](https://go.dev/doc/install) (1.19)
 - [GNU make](https://www.gnu.org/software/make/)
+- [Docker](https://docs.docker.com/get-docker/) (optional)
 
 ### Building
 
@@ -40,7 +41,25 @@ In order to test the provider, run the following command:
 make testacc
 ```
 
-This will run acceptance tests against the provider, actually spawning terraform and the provider.
+This will run acceptance tests against the provider , actually spawning terraform and the provider, using `https://demo.backstage.io` as the Backstage instance. The instance can
+be changed by setting the `BACKSTAGE_BASE_URL` environment variable, e.g.:
+
+```bash
+BACKSTAGE_BASE_URL=https://localhost:3000 make testacc
+```
+
+The project contains a [`docker-compose.yml`](./docker-compose.yml) file that can be used to spin up a local instance of Backstage, which can be used for testing. To do so, run:
+
+```bash
+docker-compose up -d
+```
+
+Some tests (i.e. resource tests) do not work with the public [demo instance](https://demo.backstage.io) of Backstage, as they modify the data. To skip those tests while using
+the demo instance, run:
+
+```bash
+ACCTEST_SKIP_RESOURCE_TEST=1 make testacc
+```
 
 ### Generating documentation
 
@@ -62,4 +81,4 @@ Thank you for your interest in improving the project.
 
 ## License
 
-This provider is distributed under the Mozilla Public License v2.0 license found in the [LICENSE](./LICENSE) file.
+This provider is distributed under the Mozilla Public License v2.0 license found in the [`LICENSE`](./LICENSE) file.
