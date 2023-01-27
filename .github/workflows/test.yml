@@ -5,15 +5,21 @@ name: Tests
 # Optionally, you can turn it on using a schedule for regular testing.
 on:
   pull_request:
+    branches: [ "main" ]
     paths-ignore:
       - 'README.md'
   push:
+    branches: [ "main" ]
     paths-ignore:
       - 'README.md'
 
 # Testing only needs permissions to read the repository contents.
 permissions:
   contents: read
+
+concurrency:
+  group: Tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Ensure project builds before running testing matrix
@@ -50,6 +56,11 @@ jobs:
     name: Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
+    services:
+      backstage:
+        image: roadiehq/community-backstage-image
+        ports:
+          - 7000
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -72,5 +83,12 @@ jobs:
       - run: go mod download
       - env:
           TF_ACC: "1"
+          ACCTEST_SKIP_RESOURCE_TEST: "1"
+          BACKSTAGE_BASE_URL: "https://demo.backstage.io"
         run: go test -v -cover ./backstage
+        timeout-minutes: 10
+      - env:
+          TF_ACC: "1"
+          BACKSTAGE_BASE_URL: "http://localhost:${{ job.services.backstage.ports[7000] }}"
+        run: go test -v -cover ./backstage/resource_location_test.go
         timeout-minutes: 10

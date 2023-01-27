@@ -3,6 +3,7 @@ package backstage
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -31,8 +32,12 @@ type backstageProviderModel struct {
 }
 
 const (
-	descriptionProviderBaseURL          = "Base URL of the Backstage instance, e.g. https://demo.backstage.io."
-	descriptionProviderDefaultNamespace = "Name of default namespace for entities (`default`, if not set)."
+	envBaseURL                 = "BACKSTAGE_BASE_URL"
+	envDefaultNamespace        = "BACKSTAGE_DEFAULT_NAMESPACE"
+	descriptionProviderBaseURL = "Base URL of the Backstage instance, e.g. https://demo.backstage.io. May also be provided via `" + envBaseURL +
+		"` environment variable."
+	descriptionProviderDefaultNamespace = "Name of default namespace for entities (`default`, if not set). May also be provided via `" + envDefaultNamespace +
+		"` environment variable."
 )
 
 // Metadata returns the provider type name.
@@ -51,13 +56,13 @@ func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 			"Interested in the provider's latest features, or want to make sure you're up to date? Check out the " +
 			"[releases](https://github.com/tdabasinskas/terraform-provider-backstage/releases) for version information and release notes.",
 		Attributes: map[string]schema.Attribute{
-			"base_url": schema.StringAttribute{Required: true, Description: descriptionProviderBaseURL, Validators: []validator.String{
+			"base_url": schema.StringAttribute{Optional: true, MarkdownDescription: descriptionProviderBaseURL, Validators: []validator.String{
 				stringvalidator.RegexMatches(
 					regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)`),
 					"must be a valid URL",
 				),
 			}},
-			"default_namespace": schema.StringAttribute{Optional: true, Description: descriptionProviderDefaultNamespace, Validators: []validator.String{
+			"default_namespace": schema.StringAttribute{Optional: true, MarkdownDescription: descriptionProviderDefaultNamespace, Validators: []validator.String{
 				stringvalidator.LengthBetween(1, 63),
 				stringvalidator.RegexMatches(
 					regexp.MustCompile(patternEntityName),
@@ -79,21 +84,38 @@ func (p *backstageProvider) Configure(ctx context.Context, req provider.Configur
 		return
 	}
 
-	baseURL := config.BaseURL.ValueString()
-	if config.BaseURL.IsUnknown() || config.BaseURL.IsNull() {
-		resp.Diagnostics.AddAttributeError(path.Root("base_url"),
-			"Unknown Base URL of Backstage instance", "Either target apply the source of the value first, or set the value statically in the configuration")
+	if config.BaseURL.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(path.Root("base_url"), "Unknown Base URL of Backstage instance", fmt.Sprintf(
+			"Either target apply the source of the value first, set the value statically in the configuration, or use the %s environment variable.", envBaseURL))
 	}
 
 	if config.DefaultNamespace.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(path.Root("default_namespace"),
-			"Unknown default entities namespace of Backstage instance",
-			"Either target apply the source of the value first, or set the value statically in the configuration")
+		resp.Diagnostics.AddAttributeError(path.Root("default_namespace"), "Unknown default entities namespace of Backstage instance", fmt.Sprintf(
+			"Either target apply the source of the value first, set the value statically in the configuration, or use the %s environment variable.", envDefaultNamespace))
 	}
 
-	defaultNamespace := config.DefaultNamespace.ValueString()
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	baseURL := os.Getenv(envBaseURL)
+	if !config.BaseURL.IsNull() {
+		baseURL = config.BaseURL.ValueString()
+	}
+
+	defaultNamespace := os.Getenv(envDefaultNamespace)
+	if !config.DefaultNamespace.IsNull() {
+		defaultNamespace = config.DefaultNamespace.ValueString()
+	}
 	if defaultNamespace == "" {
 		defaultNamespace = backstage.DefaultNamespaceName
+	}
+
+	if baseURL == "" {
+		resp.Diagnostics.AddAttributeError(path.Root("base_url"), "Missing Base URL of Backstage instance", fmt.Sprintf(
+			"The provider cannot create the Backstage API client as there is a missing or empty value for the Backstage Base URL. Set the host value in the "+
+				"configuration or use the %s environment variable. If either is already set, ensure the value is not empty.", envBaseURL))
+
 	}
 
 	if resp.Diagnostics.HasError() {

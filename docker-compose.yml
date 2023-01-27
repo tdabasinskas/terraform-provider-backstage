@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  backstage:
+    image: roadiehq/community-backstage-image:latest
+    ports:
+      - '3000:7000'
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
