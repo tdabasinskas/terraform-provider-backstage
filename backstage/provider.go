@@ -139,7 +139,9 @@ func (p *backstageProvider) Configure(ctx context.Context, req provider.Configur
 }
 
 func (p *backstageProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewLocationResource,
+	}
 }
 
 func (p *backstageProvider) DataSources(context.Context) []func() datasource.DataSource {
