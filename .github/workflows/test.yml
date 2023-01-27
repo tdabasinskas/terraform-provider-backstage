@@ -56,6 +56,8 @@ jobs:
     name: Acceptance Tests
     needs: build
     runs-on: ubuntu-latest
+    env:
+      TF_ACC: "1"
     services:
       backstage:
         image: roadiehq/community-backstage-image
@@ -82,13 +84,11 @@ jobs:
           terraform_wrapper: false
       - run: go mod download
       - env:
-          TF_ACC: "1"
           ACCTEST_SKIP_RESOURCE_TEST: "1"
           BACKSTAGE_BASE_URL: "https://demo.backstage.io"
         run: go test -v -cover ./backstage
         timeout-minutes: 10
       - env:
-          TF_ACC: "1"
           BACKSTAGE_BASE_URL: "http://localhost:${{ job.services.backstage.ports[7000] }}"
-        run: go test -v -cover ./backstage/resource_location_test.go
+        run: go test -v -cover ./backstage -run TestAccResourceLocation
         timeout-minutes: 10

@@ -30,10 +30,13 @@ resource "backstage_location" "example" {
 
 - `target` (String) Target as a string. Should be a valid URL.
 
+### Optional
+
+- `type` (String) Type of the location. Always `url`.
+
 ### Read-Only
 
 - `id` (String) Identifier of the location.
 - `last_updated` (String) Timestamp of the last Terraform update of the location.
-- `type` (String) Type of the location. Always `url`.
 
 

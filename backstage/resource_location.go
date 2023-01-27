@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/tdabasinskas/go-backstage/backstage"
 )
@@ -61,7 +62,9 @@ func (r *locationResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"id": schema.StringAttribute{Computed: true, Description: descriptionLocationID, PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			}},
-			"type": schema.StringAttribute{Computed: true, MarkdownDescription: descriptionLocationType},
+			"type": schema.StringAttribute{Optional: true, Computed: true, MarkdownDescription: descriptionLocationType, Validators: []validator.String{}, PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			}},
 			"target": schema.StringAttribute{Required: true, Description: descriptionLocationTarget,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
 			"last_updated": schema.StringAttribute{Computed: true, Description: descriptionLocationLastUpdated},
