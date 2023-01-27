@@ -61,9 +61,9 @@ func (r *locationResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"id": schema.StringAttribute{Computed: true, Description: descriptionLocationID, PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			}},
-			"type": schema.StringAttribute{Required: true, MarkdownDescription: descriptionLocationType,
+			"type": schema.StringAttribute{Computed: true, MarkdownDescription: descriptionLocationType},
+			"target": schema.StringAttribute{Required: true, Description: descriptionLocationTarget,
 				PlanModifiers: []planmodifier.String{stringplanmodifier.RequiresReplace()}},
-			"target":       schema.StringAttribute{Computed: true, Description: descriptionLocationTarget},
 			"last_updated": schema.StringAttribute{Computed: true, Description: descriptionLocationLastUpdated},
 		},
 	}
