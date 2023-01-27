@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: Tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Ensure project builds before running testing matrix
   build:
