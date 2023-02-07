@@ -1,7 +1,7 @@
 # Terraform Provider for Backstage
 
 [![Tests](https://github.com/tdabasinskas/terraform-provider-backstage/actions/workflows/test.yml/badge.svg)](https://github.com/tdabasinskas/terraform-provider-backstage/actions/workflows/test.yml)
-
+[![codecov](https://codecov.io/gh/tdabasinskas/terraform-provider-backstage/branch/main/graph/badge.svg?token=1QSZTX0N2B)](https://codecov.io/gh/tdabasinskas/terraform-provider-backstage)
 [![go-github release (latest SemVer)](https://img.shields.io/github/v/release/tdabasinskas/terraform-provider-backstage?sort=semver)](https://github.com/tdabasinskas/terraform-provider-backstage/releases)
 [![registry](https://img.shields.io/static/v1?label=terraform&message=registry&color=blueviolet)](https://registry.terraform.io/providers/tdabasinskas/backstage/latest)
 
