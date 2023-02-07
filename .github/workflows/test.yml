@@ -86,9 +86,15 @@ jobs:
       - env:
           ACCTEST_SKIP_RESOURCE_TEST: "1"
           BACKSTAGE_BASE_URL: "https://demo.backstage.io"
-        run: go test -v -cover ./backstage
+        run: go test -v -cover -covermode=atomic -coverprofile=coverage1.out ./backstage
         timeout-minutes: 10
       - env:
           BACKSTAGE_BASE_URL: "http://localhost:${{ job.services.backstage.ports[7000] }}"
-        run: go test -v -cover ./backstage -run TestAccResourceLocation
+        run: go test -v -cover -covermode=atomic -coverprofile=coverage2.out ./backstage -run TestAccResourceLocation
         timeout-minutes: 10
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage1.out,./coverage2.out
+          verbose: true

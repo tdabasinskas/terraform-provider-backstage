@@ -231,6 +231,8 @@ github.com/tdabasinskas/go-backstage v1.0.2 h1:f6WOT5GIpU9mtoLJileUcb9EdKOIy4FFC
 github.com/tdabasinskas/go-backstage v1.0.2/go.mod h1:aw7tu1VydRX26637tLcUO32vjnYVayspe34kja49200=
 github.com/tdabasinskas/go-backstage v1.1.0 h1:OF0t5LdSgtMvMrqVkX09uOjRYj/WmqyMRK8r/6rFaU0=
 github.com/tdabasinskas/go-backstage v1.1.0/go.mod h1:aw7tu1VydRX26637tLcUO32vjnYVayspe34kja49200=
+github.com/tdabasinskas/go-backstage v1.1.1 h1:dBmObJWQ2qqzA/emGGttLGdPGhbehmXiQRC/HemEeXI=
+github.com/tdabasinskas/go-backstage v1.1.1/go.mod h1:vXZ8Ypc/feAftJXPJB5EATaf1ouu9w0YOXnbyzO+hyc=
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.4+incompatible h1:dSLoQfGFAo3F6OoNhwUmLwVgaUXK79GlxNBwueZn0xI=
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
