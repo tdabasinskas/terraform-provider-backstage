@@ -14,9 +14,9 @@ func TestAccDataSourceEntities(t *testing.T) {
 			{
 				Config: testAccProviderConfig + testAccDataSourceEntitiesConfig,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.backstage_entities.test", "id", fmt.Sprint(backstage.ListEntityFilter{
-						"kind":          "user",
-						"metadata.name": "janelle.dawe",
+					resource.TestCheckResourceAttr("data.backstage_entities.test", "id", fmt.Sprint([]string{
+						"kind=user",
+						"metadata.name=janelle.dawe",
 					})),
 					resource.TestCheckResourceAttr("data.backstage_entities.test", "entities.#", "1"),
 					resource.TestCheckResourceAttr("data.backstage_entities.test", "entities.0.kind", "User"),
