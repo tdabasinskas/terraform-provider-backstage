@@ -2,7 +2,7 @@
 data "backstage_entities" "example" {
   // The filters to apply to the query:
   filters = [
-    "kind=User",
-    "metadata.namespace=default",
+    "kind=User,metadata.namespace=default",
+    "kind=Group,metadata.namespace=default",
   ]
 }
