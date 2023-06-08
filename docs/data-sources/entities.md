@@ -28,7 +28,7 @@ data "backstage_entities" "example" {
 
 ### Required
 
-- `filters` (Map of String) A set of conditions that can be used to filter entities.
+- `filters` (List of String) A set of conditions that can be used to filter entities.
 
 ### Read-Only
 
