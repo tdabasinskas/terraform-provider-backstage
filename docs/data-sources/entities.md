@@ -16,10 +16,10 @@ Use this data source to get a filtered list of [entities](https://backstage.io/d
 # Retrieves data about multiple entities that match the given filters:
 data "backstage_entities" "example" {
   // The filters to apply to the query:
-  filters = {
-    "kind"               = "User",
-    "metadata.namespace" = "default",
-  }
+  filters = [
+    "kind=User",
+    "metadata.namespace=default",
+  ]
 }
 ```
 
