@@ -103,5 +103,3 @@ Read-Only:
 - `subcomponent_of` (String) An entity reference to another component of which the component is a part.
 - `system` (String) An entity reference to the system that the component belongs to.
 - `type` (String) Type of the component definition.
-
-

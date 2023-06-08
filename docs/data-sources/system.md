@@ -97,5 +97,3 @@ Read-Only:
 
 - `domain` (String) An entity reference to the domain that the system belongs to.
 - `owner` (String) An entity reference to the owner of the system.
-
-

@@ -38,5 +38,3 @@ resource "backstage_location" "example" {
 
 - `id` (String) Identifier of the location.
 - `last_updated` (String) Timestamp of the last Terraform update of the location.
-
-
