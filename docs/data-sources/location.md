@@ -99,5 +99,3 @@ Read-Only:
 - `target` (String) Target as a string. Can be either an absolute path/URL (depending on the type), or a relative path such as./details/catalog-info.yaml which is resolved relative to the location of this Location entity itself.
 - `targets` (List of String) A list of targets as strings. They can all be either absolute paths/URLs (depending on the type), or relative paths such as./details/catalog-info.yaml which are resolved relative to the location of this Location entity itself.
 - `type` (String) The single location type, that's common to the targets specified in the spec. If it is left out, it is inherited from the location type that originally read the entity data.
-
-

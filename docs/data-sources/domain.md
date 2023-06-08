@@ -96,5 +96,3 @@ Read-Only:
 Read-Only:
 
 - `owner` (String) An entity reference to the owner of the domain.
-
-

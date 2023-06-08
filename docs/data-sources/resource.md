@@ -99,5 +99,3 @@ Read-Only:
 - `owner` (String) An entity reference to the owner of the resource
 - `system` (String) An entity reference to the system that the resource belongs to.
 - `type` (String) Type of the resource definition.
-
-

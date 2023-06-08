@@ -90,5 +90,3 @@ Read-Only:
 - `kind` (String) The high level entity type being described.
 - `name` (String) Name of the entity.
 - `namespace` (String) Namespace that the target entity belongs to.
-
-

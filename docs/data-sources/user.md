@@ -106,5 +106,3 @@ Read-Only:
 - `display_name` (String) A simple display name to present to users.
 - `email` (String) Email where this user can be reached.
 - `picture` (String) A URL of an image that represents this user.
-
-
