@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/tdabasinskas/go-backstage/backstage"
+	"github.com/tdabasinskas/go-backstage/v2/backstage"
 )
 
 var (

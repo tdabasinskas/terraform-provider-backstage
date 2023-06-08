@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/tdabasinskas/go-backstage/backstage"
+	"github.com/tdabasinskas/go-backstage/v2/backstage"
 )
 
 var (
@@ -28,9 +28,9 @@ type entityDataSource struct {
 }
 
 type entityDataSourceModel struct {
-	ID       types.String      `tfsdk:"id"`
-	Filters  map[string]string `tfsdk:"filters"`
-	Entities []entityModel     `tfsdk:"entities"`
+	ID       types.String  `tfsdk:"id"`
+	Filters  []string      `tfsdk:"filters"`
+	Entities []entityModel `tfsdk:"entities"`
 }
 
 type entityModel struct {
@@ -120,7 +120,7 @@ func (d *entityDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"[Backstage documentation](https://backstage.io/docs/features/software-catalog/software-catalog-api#filtering).",
 		Attributes: map[string]schema.Attribute{
 			"id":      schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
-			"filters": schema.MapAttribute{Required: true, Description: descriptionEntityFilters, ElementType: types.StringType},
+			"filters": schema.ListAttribute{Required: true, Description: descriptionEntityFilters, ElementType: types.StringType},
 			"entities": schema.ListNestedAttribute{Computed: true, Description: descriptionEntitySpec, NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"api_version": schema.StringAttribute{Computed: true, Description: descriptionEntityApiVersion},
@@ -180,17 +180,12 @@ func (d *entityDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		return
 	}
 
-	var filters = make(map[string]string)
-	for k, v := range state.Filters {
-		filters[k] = v
-	}
-
-	tflog.Debug(ctx, fmt.Sprintf("Getting entities %v from Backstage API", filters))
-	entities, response, err := d.client.Catalog.Entities.List(ctx, &backstage.ListEntityOptions{Filters: filters})
+	tflog.Debug(ctx, fmt.Sprintf("Getting entities %v from Backstage API", state.Filters))
+	entities, response, err := d.client.Catalog.Entities.List(ctx, &backstage.ListEntityOptions{Filters: state.Filters})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading Backstage entities",
-			fmt.Sprintf("Could not read Backstage entities %v: %s", filters, err.Error()),
+			fmt.Sprintf("Could not read Backstage entities %v: %s", state.Filters, err.Error()),
 		)
 		return
 	}
@@ -198,12 +193,12 @@ func (d *entityDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	if response.StatusCode != http.StatusOK {
 		resp.Diagnostics.AddError(
 			"Error reading Backstage entities",
-			fmt.Sprintf("Could not read Backstage entities %v: %s", filters, response.Status),
+			fmt.Sprintf("Could not read Backstage entities %v: %s", state.Filters, response.Status),
 		)
 		return
 	}
 
-	state.ID = types.StringValue(fmt.Sprint(filters))
+	state.ID = types.StringValue(fmt.Sprint(state.Filters))
 
 	for _, e := range entities {
 		entity := entityModel{
