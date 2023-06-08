@@ -32,9 +32,9 @@ func TestAccDataSourceEntities(t *testing.T) {
 
 const testAccDataSourceEntitiesConfig = `
 data "backstage_entities" "test" {
-  filters = {
-    "kind" = "user",
-    "metadata.name" = "janelle.dawe",
-  }
+  filters = [
+    "kind=user",
+    "metadata.name=janelle.dawe",
+  ]
 }
 `
