@@ -32,7 +32,7 @@ type backstageProviderModel struct {
 }
 
 const (
-	patternURL                 = `https?://.+`
+	patternURL                 = "https?://.+"
 	envBaseURL                 = "BACKSTAGE_BASE_URL"
 	envDefaultNamespace        = "BACKSTAGE_DEFAULT_NAMESPACE"
 	descriptionProviderBaseURL = "Base URL of the Backstage instance, e.g. https://demo.backstage.io. May also be provided via `" + envBaseURL +
