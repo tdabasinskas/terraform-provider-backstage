@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-go v0.20.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
-	github.com/tdabasinskas/go-backstage/v2 v2.0.0
+	github.com/tdabasinskas/go-backstage/v2 v2.1.0
 )
 
 require (
