@@ -132,9 +132,7 @@ func (p *backstageProvider) Configure(ctx context.Context, req provider.Configur
 		}
 	} else {
 		if !config.Headers.IsNull() {
-			for k, v := range config.Headers.Elements() {
-				headers[k] = v.String()
-			}
+			config.Headers.ElementsAs(ctx, &headers, true)
 		}
 	}
 
