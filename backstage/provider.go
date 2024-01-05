@@ -126,14 +126,14 @@ func (p *backstageProvider) Configure(ctx context.Context, req provider.Configur
 	}
 
 	headers := make(map[string]string)
-	if !config.Headers.IsNull() {
-		for k, v := range config.Headers.Elements() {
-			headers[k] = v.String()
+	if headersEnv := os.Getenv(envHeaders); headersEnv != "" {
+		for _, kv := range regexp.MustCompile(`(.*?)=([^=]*)(?:,|$)`).FindAllStringSubmatch(headersEnv, -1) {
+			headers[kv[1]] = kv[2]
 		}
 	} else {
-		if headersEnv := os.Getenv(envHeaders); headersEnv != "" {
-			for _, kv := range regexp.MustCompile(`(.*?)=([^=]*)(?:,|$)`).FindAllStringSubmatch(headersEnv, -1) {
-				headers[kv[1]] = kv[2]
+		if !config.Headers.IsNull() {
+			for k, v := range config.Headers.Elements() {
+				headers[k] = v.String()
 			}
 		}
 	}
