@@ -7,6 +7,9 @@ import (
 
 const testAccProviderConfig = `
 provider "backstage" {
+  headers = {
+    "Custom-Header" = "header_value"
+  }
 }
 `
 
