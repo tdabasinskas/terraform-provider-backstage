@@ -3,9 +3,6 @@ package backstage
 import (
 	"context"
 	"fmt"
-	"os"
-	"regexp"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -16,6 +13,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/tdabasinskas/go-backstage/v2/backstage"
+	"github.com/tdabasinskas/terraform-provider-backstage/internal/transport"
+	"net/http"
+	"os"
+	"regexp"
 )
 
 var _ provider.Provider = &backstageProvider{}
@@ -29,15 +30,19 @@ type backstageProvider struct {
 type backstageProviderModel struct {
 	BaseURL          types.String `tfsdk:"base_url"`
 	DefaultNamespace types.String `tfsdk:"default_namespace"`
+	Headers          types.Map    `tfsdk:"headers"`
 }
 
 const (
 	patternURL                 = "https?://.+"
 	envBaseURL                 = "BACKSTAGE_BASE_URL"
 	envDefaultNamespace        = "BACKSTAGE_DEFAULT_NAMESPACE"
+	envHeaders                 = "BACKSTAGE_HEADERS"
 	descriptionProviderBaseURL = "Base URL of the Backstage instance, e.g. https://demo.backstage.io. May also be provided via `" + envBaseURL +
 		"` environment variable."
 	descriptionProviderDefaultNamespace = "Name of default namespace for entities (`default`, if not set). May also be provided via `" + envDefaultNamespace +
+		"` environment variable."
+	descriptionProviderHeaders = "Headers to be sent with each request to the Backstage API. Useful for authentication. May also be provided via `" + envDefaultNamespace +
 		"` environment variable."
 )
 
@@ -64,6 +69,7 @@ func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 				stringvalidator.LengthBetween(1, 63),
 				stringvalidator.RegexMatches(regexp.MustCompile(patternEntityName), "must follow Backstage format restrictions"),
 			}},
+			"headers": schema.MapAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: descriptionProviderHeaders},
 		},
 	}
 }
@@ -119,16 +125,38 @@ func (p *backstageProvider) Configure(ctx context.Context, req provider.Configur
 				"configuration or use the %s environment variable. If either is already set, ensure the value is not empty and valid.", envDefaultNamespace))
 	}
 
+	headers := make(map[string]string)
+	if !config.Headers.IsNull() {
+		for k, v := range config.Headers.Elements() {
+			headers[k] = v.String()
+		}
+	} else {
+		if headersEnv := os.Getenv(envHeaders); headersEnv != "" {
+			for _, kv := range regexp.MustCompile(`(.*?)=([^=]*)(?:,|$)`).FindAllStringSubmatch(headersEnv, -1) {
+				headers[kv[1]] = kv[2]
+			}
+		}
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	ctx = tflog.SetField(ctx, "backstage_base_url", baseURL)
 	ctx = tflog.SetField(ctx, "backstage_default_namespace", defaultNamespace)
+	ctx = tflog.SetField(ctx, "backstage_headers", headers)
 
 	tflog.Debug(ctx, "Creating Backstage API client")
 
-	client, err := backstage.NewClient(baseURL, defaultNamespace, nil)
+	var baseClient = &http.Client{}
+	if len(headers) > 0 {
+		baseClient = &http.Client{
+			Transport: &transport.HeadersTransport{
+				Headers: headers,
+			},
+		}
+	}
+	client, err := backstage.NewClient(baseURL, defaultNamespace, baseClient)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to create Backstage API client",
 			fmt.Sprintf("An unexpected error occurred when creating the Backstage API client: %s", err.Error()),
