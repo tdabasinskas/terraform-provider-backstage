@@ -62,7 +62,7 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       - run: go mod download
-      - run: go test -v ./internal
+      - run: go test -v ./internal/...
 
   # Run acceptance tests in a matrix with Terraform CLI versions
   test-terraform:
