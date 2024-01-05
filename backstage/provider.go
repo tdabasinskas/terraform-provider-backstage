@@ -57,17 +57,11 @@ func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 			"[releases](https://github.com/tdabasinskas/terraform-provider-backstage/releases) for version information and release notes.",
 		Attributes: map[string]schema.Attribute{
 			"base_url": schema.StringAttribute{Optional: true, MarkdownDescription: descriptionProviderBaseURL, Validators: []validator.String{
-				stringvalidator.RegexMatches(
-					regexp.MustCompile(`https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)`),
-					"must be a valid URL",
-				),
+				stringvalidator.RegexMatches(regexp.MustCompile(`https?://.+`), "must be a valid URL"),
 			}},
 			"default_namespace": schema.StringAttribute{Optional: true, MarkdownDescription: descriptionProviderDefaultNamespace, Validators: []validator.String{
 				stringvalidator.LengthBetween(1, 63),
-				stringvalidator.RegexMatches(
-					regexp.MustCompile(patternEntityName),
-					"must follow Backstage format restrictions",
-				),
+				stringvalidator.RegexMatches(regexp.MustCompile(patternEntityName), "must follow Backstage format restrictions"),
 			}},
 		},
 	}
