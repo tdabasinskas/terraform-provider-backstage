@@ -38,3 +38,4 @@ provider "backstage" {
 
 - `base_url` (String) Base URL of the Backstage instance, e.g. https://demo.backstage.io. May also be provided via `BACKSTAGE_BASE_URL` environment variable.
 - `default_namespace` (String) Name of default namespace for entities (`default`, if not set). May also be provided via `BACKSTAGE_DEFAULT_NAMESPACE` environment variable.
+- `headers` (Map of String) Headers to be sent with each request to the Backstage API. Useful for authentication. May also be provided via `BACKSTAGE_DEFAULT_NAMESPACE` environment variable.
