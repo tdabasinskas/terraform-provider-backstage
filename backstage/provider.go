@@ -42,7 +42,7 @@ const (
 		"` environment variable."
 	descriptionProviderDefaultNamespace = "Name of default namespace for entities (`default`, if not set). May also be provided via `" + envDefaultNamespace +
 		"` environment variable."
-	descriptionProviderHeaders = "Headers to be sent with each request to the Backstage API. Useful for authentication. May also be provided via `" + envDefaultNamespace +
+	descriptionProviderHeaders = "Headers to be sent with each request to the Backstage API. Useful for authentication. May also be provided via `" + envHeaders +
 		"` environment variable."
 )
 
