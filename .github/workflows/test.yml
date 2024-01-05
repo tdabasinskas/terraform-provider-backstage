@@ -51,10 +51,23 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
 
-  # Run acceptance tests in a matrix with Terraform CLI versions
-  test:
-    name: Acceptance Tests
+  test-internal:
+    name: Internal Tests
     needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go mod download
+      - run: go test -v ./internal
+
+  # Run acceptance tests in a matrix with Terraform CLI versions
+  test-terraform:
+    name: Acceptance Tests
+    needs: test-internal
     runs-on: ubuntu-latest
     env:
       TF_ACC: "1"
