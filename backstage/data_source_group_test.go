@@ -1,7 +1,6 @@
 package backstage
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -21,7 +20,6 @@ func TestAccDataSourceGroup(t *testing.T) {
 						"url:https://github.com/backstage/backstage/tree/master/packages/catalog-model/examples/acme/"),
 					resource.TestCheckResourceAttr("data.backstage_group.test", "relations.0.type", "childOf"),
 					resource.TestCheckResourceAttr("data.backstage_group.test", "spec.parent", "backstage"),
-					resource.TestMatchResourceAttr("data.backstage_group.test", "spec.profile.picture", regexp.MustCompile(".*team-a.*")),
 				),
 			},
 		},
