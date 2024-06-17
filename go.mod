@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tdabasinskas/go-backstage/v2 v2.4.0
+	github.com/tdabasinskas/go-backstage/v2 v2.5.0
 )
 
 require (
