@@ -79,6 +79,7 @@ const (
 	patternEntityName                  = `^[a-zA-Z0-9\-_\.]*$`
 	descriptionEntityFilters           = "A set of conditions that can be used to filter entities."
 	descriptionEntitySpec              = "The specification data describing the entity itself."
+	descriptionEntitySpecJson          = "The specification data describing the entity itself (as JSON)."
 	descriptionEntityApiVersion        = "Version of specification format for this particular entity that this is written against."
 	descriptionEntityKind              = "The high level entity type being described."
 	descriptionEntityMetadata          = "Metadata fields common to all versions/kinds of entity."
@@ -127,7 +128,7 @@ func (d *entityDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"entities": schema.ListNestedAttribute{Computed: true, Description: descriptionEntitySpec, NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"api_version": schema.StringAttribute{Computed: true, Description: descriptionEntityApiVersion},
-					"spec":        schema.StringAttribute{Computed: true, Description: descriptionEntitySpec, CustomType: jsontypes.NormalizedType{}},
+					"spec":        schema.StringAttribute{Computed: true, Description: descriptionEntitySpecJson, CustomType: jsontypes.NormalizedType{}},
 					"kind":        schema.StringAttribute{Computed: true, Description: descriptionEntityKind},
 					"metadata": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
 						"uid":         schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
