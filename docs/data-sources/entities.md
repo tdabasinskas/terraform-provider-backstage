@@ -44,6 +44,7 @@ Read-Only:
 - `kind` (String) The high level entity type being described.
 - `metadata` (Attributes) Metadata fields common to all versions/kinds of entity. (see [below for nested schema](#nestedatt--entities--metadata))
 - `relations` (Attributes List) Relations that this entity has with other entities (see [below for nested schema](#nestedatt--entities--relations))
+- `spec` (String) The specification data describing the entity itself.
 
 <a id="nestedatt--entities--metadata"></a>
 ### Nested Schema for `entities.metadata`
