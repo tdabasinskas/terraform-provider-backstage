@@ -6,3 +6,8 @@ data "backstage_entities" "example" {
     "kind=Group,metadata.namespace=default",
   ]
 }
+
+# Outputs data from `spec` from an entity:
+output "example" {
+  value = jsondecode(data.backstage_entities.example.entities[0].spec)["profile"]["email"]
+}
