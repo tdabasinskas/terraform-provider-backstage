@@ -2,7 +2,9 @@ package backstage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -35,6 +37,7 @@ type entityDataSourceModel struct {
 
 type entityModel struct {
 	ApiVersion types.String          `tfsdk:"api_version"`
+	Spec       jsontypes.Normalized  `tfsdk:"spec"`
 	Kind       types.String          `tfsdk:"kind"`
 	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
 	Relations  []entityRelationModel `tfsdk:"relations"`
@@ -76,6 +79,7 @@ const (
 	patternEntityName                  = `^[a-zA-Z0-9\-_\.]*$`
 	descriptionEntityFilters           = "A set of conditions that can be used to filter entities."
 	descriptionEntitySpec              = "The specification data describing the entity itself."
+	descriptionEntitySpecJson          = "The specification data describing the entity itself (as JSON)."
 	descriptionEntityApiVersion        = "Version of specification format for this particular entity that this is written against."
 	descriptionEntityKind              = "The high level entity type being described."
 	descriptionEntityMetadata          = "Metadata fields common to all versions/kinds of entity."
@@ -124,6 +128,7 @@ func (d *entityDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			"entities": schema.ListNestedAttribute{Computed: true, Description: descriptionEntitySpec, NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"api_version": schema.StringAttribute{Computed: true, Description: descriptionEntityApiVersion},
+					"spec":        schema.StringAttribute{Computed: true, Description: descriptionEntitySpecJson, CustomType: jsontypes.NormalizedType{}},
 					"kind":        schema.StringAttribute{Computed: true, Description: descriptionEntityKind},
 					"metadata": schema.SingleNestedAttribute{Computed: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
 						"uid":         schema.StringAttribute{Computed: true, Description: descriptionEntityMetadataUID},
@@ -201,9 +206,19 @@ func (d *entityDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	state.ID = types.StringValue(fmt.Sprint(state.Filters))
 
 	for _, e := range entities {
+		v, err := json.Marshal(e.Spec)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error parsing Backstage entity specs",
+				fmt.Sprintf("Could not parse Specs for Backstage entity %v: %s", e.Metadata.Name, err.Error()),
+			)
+			continue
+		}
+
 		entity := entityModel{
 			ApiVersion: types.StringValue(e.ApiVersion),
 			Kind:       types.StringValue(e.Kind),
+			Spec:       jsontypes.NewNormalizedValue(string(v)),
 		}
 
 		for _, i := range e.Relations {
