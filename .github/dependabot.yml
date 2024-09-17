@@ -6,7 +6,23 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
       interval: "daily"
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+  - package-ecosystem: "terraform"
+    directory: "/examples"
+    schedule:
+      interval: "daily"
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
