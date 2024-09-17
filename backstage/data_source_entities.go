@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -186,7 +186,10 @@ func (d *entityDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("Getting entities %v from Backstage API", state.Filters))
-	entities, response, err := d.client.Catalog.Entities.List(ctx, &backstage.ListEntityOptions{Filters: state.Filters})
+	entities, response, err := d.client.Catalog.Entities.List(ctx, &backstage.ListEntityOptions{
+		Filters: state.Filters,
+		Order:   []backstage.ListEntityOrder{{Field: "metadata.name", Direction: "asc"}},
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error reading Backstage entities",
