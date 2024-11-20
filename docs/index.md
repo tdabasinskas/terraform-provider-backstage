@@ -43,3 +43,5 @@ provider "backstage" {
 - `base_url` (String) Base URL of the Backstage instance, e.g. https://demo.backstage.io. May also be provided via `BACKSTAGE_BASE_URL` environment variable.
 - `default_namespace` (String) Name of default namespace for entities (`default`, if not set). May also be provided via `BACKSTAGE_DEFAULT_NAMESPACE` environment variable.
 - `headers` (Map of String) Headers to be sent with each request to the Backstage API. Useful for authentication. May also be provided via `BACKSTAGE_HEADERS` environment variable.
+- `retries` (Number) Number of retries to attempt on recoverable API errors (default: 0). May also be provided via `BACKSTAGE_RETRIES` environment variable.
+- `timeout_seconds` (Number) Timeout for requests to the Backstage API in seconds (default: 15). May also be provided via `BACKSTAGE_TIMEOUT_SECONDS` environment variable.
