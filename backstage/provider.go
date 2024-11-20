@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -35,6 +36,7 @@ type backstageProviderModel struct {
 	DefaultNamespace types.String `tfsdk:"default_namespace"`
 	Headers          types.Map    `tfsdk:"headers"`
 	Retries          types.Int64  `tfsdk:"retries"`
+	TimeoutSeconds   types.Int64  `tfsdk:"timeout_seconds"`
 }
 
 const (
@@ -43,6 +45,7 @@ const (
 	envDefaultNamespace        = "BACKSTAGE_DEFAULT_NAMESPACE"
 	envHeaders                 = "BACKSTAGE_HEADERS"
 	envRetries                 = "BACKSTAGE_RETRIES"
+	envTimeoutSeconds          = "BACKSTAGE_TIMEOUT_SECONDS"
 	descriptionProviderBaseURL = "Base URL of the Backstage instance, e.g. https://demo.backstage.io. May also be provided via `" + envBaseURL +
 		"` environment variable."
 	descriptionProviderDefaultNamespace = "Name of default namespace for entities (`default`, if not set). May also be provided via `" + envDefaultNamespace +
@@ -50,6 +53,8 @@ const (
 	descriptionProviderHeaders = "Headers to be sent with each request to the Backstage API. Useful for authentication. May also be provided via `" + envHeaders +
 		"` environment variable."
 	descriptionProviderRetries = "Number of retries to attempt on recoverable API errors (default: 0). May also be provided via `" + envRetries +
+		"` environment variable."
+	descriptionProviderTimeoutSeconds = "Timeout for requests to the Backstage API in seconds (default: 15). May also be provided via `" + envTimeoutSeconds +
 		"` environment variable."
 )
 
@@ -76,8 +81,9 @@ func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 				stringvalidator.LengthBetween(1, 63),
 				stringvalidator.RegexMatches(regexp.MustCompile(patternEntityName), "must follow Backstage format restrictions"),
 			}},
-			"headers": schema.MapAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: descriptionProviderHeaders},
-			"retries": schema.Int64Attribute{Optional: true, MarkdownDescription: descriptionProviderRetries},
+			"headers":         schema.MapAttribute{Optional: true, ElementType: types.StringType, MarkdownDescription: descriptionProviderHeaders},
+			"retries":         schema.Int64Attribute{Optional: true, MarkdownDescription: descriptionProviderRetries},
+			"timeout_seconds": schema.Int64Attribute{Optional: true, MarkdownDescription: descriptionProviderTimeoutSeconds},
 		},
 	}
 }
@@ -161,18 +167,34 @@ func (p *backstageProvider) Configure(ctx context.Context, req provider.Configur
 		return
 	}
 
+	timeoutSeconds := 15
+	timeoutSecondsStr := os.Getenv(envTimeoutSeconds)
+	if timeoutSecondsStr != "" {
+		var err error
+		if timeoutSeconds, err = strconv.Atoi(timeoutSecondsStr); err != nil {
+			resp.Diagnostics.AddAttributeError(path.Root("timeout_seconds"), "Invalid timeout for requests to the Backstage API", fmt.Sprintf("The provider cannot create the Backstage API client as there is invalid value for the timeout for requests to the Backstage API: %s.", envTimeoutSeconds))
+		}
+	} else {
+		if !config.TimeoutSeconds.IsNull() {
+			timeoutSeconds = int(config.TimeoutSeconds.ValueInt64())
+		}
+	}
+
 	ctx = tflog.SetField(ctx, "backstage_base_url", baseURL)
 	ctx = tflog.SetField(ctx, "backstage_default_namespace", defaultNamespace)
 	ctx = tflog.SetField(ctx, "backstage_headers", headers)
 	ctx = tflog.SetField(ctx, "backstage_retries", retries)
+	ctx = tflog.SetField(ctx, "backstage_timeout_seconds", timeoutSeconds)
 
 	tflog.Debug(ctx, "Creating Backstage API client")
 
 	baseClient := &http.Client{}
+	baseClient.Timeout = time.Duration(timeoutSeconds) * time.Second
 
 	if retries > 0 {
 		retryableClient := retryablehttp.NewClient()
 		retryableClient.RetryMax = retries
+		retryableClient.HTTPClient.Timeout = baseClient.Timeout
 		baseClient = retryableClient.StandardClient()
 	}
 
