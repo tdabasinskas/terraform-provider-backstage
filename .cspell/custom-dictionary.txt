@@ -26,3 +26,5 @@ stringplanmodifier
 planmodifier
 jsondecode
 tfplugindocs
+retryablehttp
+retryable
