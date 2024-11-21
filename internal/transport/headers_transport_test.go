@@ -2,11 +2,12 @@ package transport
 
 import (
 	"context"
-	"github.com/h2non/gock"
-	"github.com/stretchr/testify/assert"
-	"github.com/tdabasinskas/go-backstage/v2/backstage"
 	"net/http"
 	"testing"
+
+	"github.com/datolabs-io/go-backstage/v3"
+	"github.com/h2non/gock"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHeadersTransport_HeadersAdded(t *testing.T) {
