@@ -32,3 +32,32 @@ data "backstage_component" "test" {
   name = "shuffle-api"
 }
 `
+
+func TestAccDataSourceComponent_WithFallback(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+					data "backstage_component" "test" {
+						name = "non_existent_component"
+						namespace = "default"
+						fallback = {
+							id = "123456"
+							kind = "Component"
+							name = "fallback_component"
+							namespace = "default"
+						}
+					}
+				`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.backstage_component.test", "kind", "Component"),
+					resource.TestCheckResourceAttr("data.backstage_component.test", "name", "fallback_component"),
+					resource.TestCheckNoResourceAttr("data.backstage_component.test", "api_version"),
+					resource.TestCheckNoResourceAttr("data.backstage_component.test", "api_version"),
+					resource.TestCheckNoResourceAttr("data.backstage_component.test", "metadata"),
+				),
+			},
+		},
+	})
+}

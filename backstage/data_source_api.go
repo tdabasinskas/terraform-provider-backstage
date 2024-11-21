@@ -72,7 +72,7 @@ const (
 	descriptionApiSpecOwner      = "An entity reference to the owner of the API"
 	descriptionApiSpecDefinition = "Definition of the API, based on the format defined by the type."
 	descriptionApiSpecSystem     = "An entity reference to the system that the API belongs to."
-	descriptionEntityFallback    = "A full entity object that represents the API as it would exist in backstage. Set this to provide a fallback in case the API is not functioning, is down, or is unrealiable."
+	descriptionApiFallback       = "A full entity object that represents the API as it would exist in backstage. Set this to provide a fallback in case the API is not functioning, is down, or is unrealiable."
 )
 
 // Schema defines the schema for the data source.
@@ -136,7 +136,7 @@ func (d *apiDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				"definition": schema.StringAttribute{Computed: true, Description: descriptionApiSpecDefinition},
 				"system":     schema.StringAttribute{Computed: true, Description: descriptionApiSpecSystem},
 			}},
-			"fallback": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityFallback, Attributes: map[string]schema.Attribute{
+			"fallback": schema.SingleNestedAttribute{Optional: true, Description: descriptionApiFallback, Attributes: map[string]schema.Attribute{
 				"id": schema.StringAttribute{Optional: true, Computed: true, Description: descriptionEntityMetadataUID},
 				"name": schema.StringAttribute{Optional: true, Computed: true, Description: descriptionEntityMetadataName, Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 63),
