@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/datolabs-io/go-backstage/v3"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/tdabasinskas/go-backstage/v2/backstage"
 )
 
 var (

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/datolabs-io/go-backstage/v3"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -13,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/tdabasinskas/go-backstage/v2/backstage"
 )
 
 var (

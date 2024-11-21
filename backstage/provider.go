@@ -3,6 +3,11 @@ package backstage
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"regexp"
+
+	"github.com/datolabs-io/go-backstage/v3"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -12,11 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/tdabasinskas/go-backstage/v2/backstage"
 	"github.com/tdabasinskas/terraform-provider-backstage/internal/transport"
-	"net/http"
-	"os"
-	"regexp"
 )
 
 var _ provider.Provider = &backstageProvider{}
