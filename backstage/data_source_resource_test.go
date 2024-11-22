@@ -1,6 +1,7 @@
 package backstage
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -31,3 +32,42 @@ data "backstage_resource" "test" {
   name = "artists-db"
 }
 `
+
+func TestAccDataSourceResource_WithFallback(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+					data "backstage_resource" "test" {
+						name = "artist_not_found_resource_a9ab8"
+						fallback = {
+							name = "fallback_artists"
+						}
+					}
+				`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.backstage_resource.test", "api_version", "backstage.io/v1alpha1"),
+					resource.TestCheckResourceAttr("data.backstage_resource.test", "kind", "Resource"),
+					resource.TestCheckResourceAttr("data.backstage_resource.test", "name", "fallback_artists"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceResource_WithoutFallback_Error(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+					data "backstage_resource" "test" {
+						name = "artist_not_found_resource_a9ab8"
+					}
+				`,
+				ExpectError: regexp.MustCompile(`default/artist_not_found_resource_a9ab8: 404 Not Found`),
+			},
+		},
+	})
+}

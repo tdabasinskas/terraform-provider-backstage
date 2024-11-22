@@ -39,6 +39,7 @@ type groupDataSourceModel struct {
 	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
 	Relations  []entityRelationModel `tfsdk:"relations"`
 	Spec       *groupSpecModel       `tfsdk:"spec"`
+	Fallback   *groupFallbackModel   `tfsdk:"fallback"`
 }
 
 type groupSpecModel struct {
@@ -55,6 +56,17 @@ type groupSpecProfileModel struct {
 	Picture     types.String `tfsdk:"picture"`
 }
 
+type groupFallbackModel struct {
+	ID         types.String          `tfsdk:"id"`
+	Name       types.String          `tfsdk:"name"`
+	Namespace  types.String          `tfsdk:"namespace"`
+	ApiVersion types.String          `tfsdk:"api_version"`
+	Kind       types.String          `tfsdk:"kind"`
+	Metadata   *entityMetadataModel  `tfsdk:"metadata"`
+	Relations  []entityRelationModel `tfsdk:"relations"`
+	Spec       *groupSpecModel       `tfsdk:"spec"`
+}
+
 const (
 	descriptionGroupType                   = "The type of group."
 	descriptionGroupSpecProfile            = "Profile information about the group, mainly for display purposes."
@@ -64,6 +76,7 @@ const (
 	descriptionGroupSpecParent             = "Parent is the immediate parent group in the hierarchy, if any."
 	descriptionGroupSpecChildren           = "Children contains immediate child groups of this group in the hierarchy (whose parent field points to this group)."
 	descriptionGroupSpecMembers            = "Members contains the users that are members of this group."
+	descriptionGroupFallback               = "A complete replica of the `Group` as it would exist in backstage. Set this to provide a fallback in case the Backstage instance is not functioning, is down, or is unrealiable."
 )
 
 // Metadata returns the data source type name.
@@ -136,6 +149,67 @@ func (d *groupDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 					"picture":      schema.StringAttribute{Computed: true, Description: descriptionGroupSpecProfilePicture},
 				}},
 			}},
+			"fallback": schema.SingleNestedAttribute{Optional: true, Description: descriptionGroupFallback, Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+				"name": schema.StringAttribute{Required: true, Description: descriptionEntityMetadataName, Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 63),
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(patternEntityName),
+						"must follow Backstage format restrictions",
+					),
+				}},
+				"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace, Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 63),
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(patternEntityName),
+						"must follow Backstage format restrictions",
+					),
+				}},
+				"api_version": schema.StringAttribute{Optional: true, Description: descriptionEntityApiVersion},
+				"kind":        schema.StringAttribute{Optional: true, Description: descriptionEntityKind},
+				"metadata": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
+					"uid":         schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+					"etag":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataEtag},
+					"name":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataName},
+					"namespace":   schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace},
+					"title":       schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataTitle},
+					"description": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataDescription},
+					"labels":      schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataLabels, ElementType: types.StringType},
+					"annotations": schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataAnnotations, ElementType: types.StringType},
+					"tags":        schema.ListAttribute{Optional: true, Description: descriptionEntityMetadataTags, ElementType: types.StringType},
+					"links": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityMetadataLinks, NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"url":   schema.StringAttribute{Optional: true, Description: descriptionEntityLinkURL},
+							"title": schema.StringAttribute{Optional: true, Description: descriptionEntityLinkTitle},
+							"icon":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkIco},
+							"type":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkType},
+						},
+					}},
+				}},
+				"relations": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityRelations, NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type":       schema.StringAttribute{Optional: true, Description: descriptionEntityRelationType},
+						"target_ref": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetRef},
+						"target": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityRelationTarget,
+							Attributes: map[string]schema.Attribute{
+								"name":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetName},
+								"kind":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetKind},
+								"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetNamespace},
+							}},
+					},
+				}},
+				"spec": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
+					"type":     schema.StringAttribute{Optional: true, Description: descriptionGroupType},
+					"parent":   schema.StringAttribute{Optional: true, Description: descriptionGroupSpecParent},
+					"children": schema.ListAttribute{Optional: true, Description: descriptionGroupSpecChildren, ElementType: types.StringType},
+					"members":  schema.ListAttribute{Optional: true, Description: descriptionGroupSpecMembers, ElementType: types.StringType},
+					"profile": schema.SingleNestedAttribute{Optional: true, Description: descriptionGroupSpecProfile, Attributes: map[string]schema.Attribute{
+						"display_name": schema.StringAttribute{Optional: true, Description: descriptionGroupSpecProfileDisplayName},
+						"email":        schema.StringAttribute{Optional: true, Description: descriptionGroupSpecProfileEmail},
+						"picture":      schema.StringAttribute{Optional: true, Description: descriptionGroupSpecProfilePicture},
+					}},
+				}},
+			}},
 		},
 	}
 }
@@ -165,84 +239,110 @@ func (d *groupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	tflog.Debug(ctx, fmt.Sprintf("Getting Group kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
 	group, response, err := d.client.Catalog.Groups.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Backstage Group kind",
-			fmt.Sprintf("Could not read Backstage Group kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
-		)
-		return
+		const shortErr = "Error reading Backstage Group kind"
+		longErr := fmt.Sprintf("Could not read Backstage Group kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error())
+		if state.Fallback == nil {
+			resp.Diagnostics.AddError(shortErr, longErr)
+			return
+		}
+		resp.Diagnostics.AddWarning(shortErr, longErr)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		resp.Diagnostics.AddError(
-			"Error reading Backstage Group kind",
-			fmt.Sprintf("Could not read Backstage Group kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
-		)
-		return
+		const shortErr = "Error reading Backstage Group kind"
+		longErr := fmt.Sprintf("Could not read Backstage Group kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status)
+		if state.Fallback == nil {
+			resp.Diagnostics.AddError(shortErr, longErr)
+			return
+		}
+		resp.Diagnostics.AddWarning(shortErr, longErr)
+	}
+	if (err != nil || response.StatusCode != http.StatusOK) && state.Fallback != nil {
+		if state.Fallback.ID.IsNull() {
+			state.Fallback.ID = types.StringValue("123456789")
+		}
+		if state.Fallback.ApiVersion.IsNull() {
+			state.Fallback.ApiVersion = types.StringValue("backstage.io/v1alpha1")
+		}
+		if state.Fallback.Kind.IsNull() {
+			state.Fallback.Kind = types.StringValue(backstage.KindGroup)
+		}
+		state.ID = state.Fallback.ID
+		state.Name = state.Fallback.Name
+		state.Namespace = state.Fallback.Namespace
+		state.ApiVersion = state.Fallback.ApiVersion
+		state.Kind = state.Fallback.Kind
+		state.Metadata = state.Fallback.Metadata
+		state.Relations = state.Fallback.Relations
+		state.Spec = state.Fallback.Spec
 	}
 
-	state.ID = types.StringValue(group.Metadata.UID)
-	state.ApiVersion = types.StringValue(group.ApiVersion)
-	state.Kind = types.StringValue(group.Kind)
+	if err == nil && response.StatusCode == http.StatusOK {
 
-	for _, i := range group.Relations {
-		state.Relations = append(state.Relations, entityRelationModel{
-			Type:      types.StringValue(i.Type),
-			TargetRef: types.StringValue(i.TargetRef),
-			Target: &entityRelationTargetModel{
-				Kind:      types.StringValue(i.Target.Kind),
-				Name:      types.StringValue(i.Target.Name),
-				Namespace: types.StringValue(i.Target.Namespace)},
-		})
-	}
+		state.ID = types.StringValue(group.Metadata.UID)
+		state.ApiVersion = types.StringValue(group.ApiVersion)
+		state.Kind = types.StringValue(group.Kind)
 
-	state.Spec = &groupSpecModel{
-		Type:   types.StringValue(group.Spec.Type),
-		Parent: types.StringValue(group.Spec.Parent),
-		Profile: &groupSpecProfileModel{
-			DisplayName: types.StringValue(group.Spec.Profile.DisplayName),
-			Email:       types.StringValue(group.Spec.Profile.Email),
-			Picture:     types.StringValue(group.Spec.Profile.Picture),
-		},
-	}
+		for _, i := range group.Relations {
+			state.Relations = append(state.Relations, entityRelationModel{
+				Type:      types.StringValue(i.Type),
+				TargetRef: types.StringValue(i.TargetRef),
+				Target: &entityRelationTargetModel{
+					Kind:      types.StringValue(i.Target.Kind),
+					Name:      types.StringValue(i.Target.Name),
+					Namespace: types.StringValue(i.Target.Namespace)},
+			})
+		}
 
-	for _, i := range group.Spec.Children {
-		state.Spec.Children = append(state.Spec.Children, types.StringValue(i))
-	}
+		state.Spec = &groupSpecModel{
+			Type:   types.StringValue(group.Spec.Type),
+			Parent: types.StringValue(group.Spec.Parent),
+			Profile: &groupSpecProfileModel{
+				DisplayName: types.StringValue(group.Spec.Profile.DisplayName),
+				Email:       types.StringValue(group.Spec.Profile.Email),
+				Picture:     types.StringValue(group.Spec.Profile.Picture),
+			},
+		}
 
-	for _, i := range group.Spec.Members {
-		state.Spec.Members = append(state.Spec.Members, types.StringValue(i))
-	}
+		for _, i := range group.Spec.Children {
+			state.Spec.Children = append(state.Spec.Children, types.StringValue(i))
+		}
 
-	state.Metadata = &entityMetadataModel{
-		UID:         types.StringValue(group.Metadata.UID),
-		Etag:        types.StringValue(group.Metadata.Etag),
-		Name:        types.StringValue(group.Metadata.Name),
-		Namespace:   types.StringValue(group.Metadata.Namespace),
-		Title:       types.StringValue(group.Metadata.Title),
-		Description: types.StringValue(group.Metadata.Description),
-		Annotations: map[string]string{},
-		Labels:      map[string]string{},
-	}
+		for _, i := range group.Spec.Members {
+			state.Spec.Members = append(state.Spec.Members, types.StringValue(i))
+		}
 
-	for k, v := range group.Metadata.Labels {
-		state.Metadata.Labels[k] = v
-	}
+		state.Metadata = &entityMetadataModel{
+			UID:         types.StringValue(group.Metadata.UID),
+			Etag:        types.StringValue(group.Metadata.Etag),
+			Name:        types.StringValue(group.Metadata.Name),
+			Namespace:   types.StringValue(group.Metadata.Namespace),
+			Title:       types.StringValue(group.Metadata.Title),
+			Description: types.StringValue(group.Metadata.Description),
+			Annotations: map[string]string{},
+			Labels:      map[string]string{},
+		}
 
-	for k, v := range group.Metadata.Annotations {
-		state.Metadata.Annotations[k] = v
-	}
+		for k, v := range group.Metadata.Labels {
+			state.Metadata.Labels[k] = v
+		}
 
-	for _, v := range group.Metadata.Tags {
-		state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
-	}
+		for k, v := range group.Metadata.Annotations {
+			state.Metadata.Annotations[k] = v
+		}
 
-	for _, v := range group.Metadata.Links {
-		state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
-			URL:   types.StringValue(v.URL),
-			Title: types.StringValue(v.Title),
-			Icon:  types.StringValue(v.Icon),
-			Type:  types.StringValue(v.Type),
-		})
+		for _, v := range group.Metadata.Tags {
+			state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
+		}
+
+		for _, v := range group.Metadata.Links {
+			state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
+				URL:   types.StringValue(v.URL),
+				Title: types.StringValue(v.Title),
+				Icon:  types.StringValue(v.Icon),
+				Type:  types.StringValue(v.Type),
+			})
+		}
 	}
 
 	diags := resp.State.Set(ctx, state)

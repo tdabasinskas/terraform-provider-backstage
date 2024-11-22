@@ -33,3 +33,46 @@ data "backstage_api" "test" {
   name = "streetlights"
 }
 `
+
+func TestAccApiDataSource_WithFallback(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+                    data "backstage_api" "test" {
+                        name = "non_existent_api_a9ab8"
+                        namespace = "default"
+                        fallback = {
+							id = "123456"
+                            name = "fallback_api"
+                            namespace = "default"
+							metadata = {
+								labels = {
+									"key" = "value"
+								}
+							}
+                            spec = {
+                                type = "openapi"
+                                lifecycle = "production"
+                                owner = "team-a"
+                                definition = "https://example.com/api-spec"
+                                system = "system-x"
+                            }
+                        }
+                    }
+                `,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.backstage_api.test", "name", "fallback_api"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "namespace", "default"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.type", "openapi"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.lifecycle", "production"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.owner", "team-a"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.definition", "https://example.com/api-spec"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.system", "system-x"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "metadata.labels.key", "value"),
+				),
+			},
+		},
+	})
+}

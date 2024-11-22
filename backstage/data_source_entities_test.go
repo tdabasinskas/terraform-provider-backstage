@@ -2,9 +2,10 @@ package backstage
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/go-cty/cty/function/stdlib"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
