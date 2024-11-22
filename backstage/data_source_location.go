@@ -31,6 +31,25 @@ type locationDataSource struct {
 }
 
 type locationDataSourceModel struct {
+	ID         types.String           `tfsdk:"id"`
+	Name       types.String           `tfsdk:"name"`
+	Namespace  types.String           `tfsdk:"namespace"`
+	ApiVersion types.String           `tfsdk:"api_version"`
+	Kind       types.String           `tfsdk:"kind"`
+	Metadata   *entityMetadataModel   `tfsdk:"metadata"`
+	Relations  []entityRelationModel  `tfsdk:"relations"`
+	Spec       *locationSpecModel     `tfsdk:"spec"`
+	Fallback   *locationFallbackModel `tfsdk:"fallback"`
+}
+
+type locationSpecModel struct {
+	Type     types.String   `tfsdk:"type"`
+	Target   types.String   `tfsdk:"target"`
+	Targets  []types.String `tfsdk:"targets"`
+	Presence types.String   `tfsdk:"presence"`
+}
+
+type locationFallbackModel struct {
 	ID         types.String          `tfsdk:"id"`
 	Name       types.String          `tfsdk:"name"`
 	Namespace  types.String          `tfsdk:"namespace"`
@@ -41,13 +60,6 @@ type locationDataSourceModel struct {
 	Spec       *locationSpecModel    `tfsdk:"spec"`
 }
 
-type locationSpecModel struct {
-	Type     types.String   `tfsdk:"type"`
-	Target   types.String   `tfsdk:"target"`
-	Targets  []types.String `tfsdk:"targets"`
-	Presence types.String   `tfsdk:"presence"`
-}
-
 const (
 	descriptionLocationSpecType = "The single location type, that's common to the targets specified in the spec. If it is left out, it is inherited from the location type " +
 		"that originally read the entity data."
@@ -56,6 +68,7 @@ const (
 	descriptionLocationSpecTargets = "A list of targets as strings. They can all be either absolute paths/URLs (depending on the type), or relative paths such as" +
 		"./details/catalog-info.yaml which are resolved relative to the location of this Location entity itself."
 	descriptionLocationSpecPresence = "Presence describes whether the presence of the location target is required and it should be considered an error if it can not be found."
+	descriptionLocationFallback     = "A complete replica of the `Location` as it would exist in backstage. Set this to provide a fallback in case the Backstage instance is not functioning, is down, or is unrealiable."
 )
 
 // Metadata returns the data source type name.
@@ -123,6 +136,62 @@ func (d *locationDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 				"targets":  schema.ListAttribute{Computed: true, Description: descriptionLocationSpecTargets, ElementType: types.StringType},
 				"presence": schema.StringAttribute{Computed: true, Description: descriptionLocationSpecPresence},
 			}},
+			"fallback": schema.SingleNestedAttribute{Optional: true, Description: descriptionLocationFallback, Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+				"name": schema.StringAttribute{Required: true, Description: descriptionEntityMetadataName, Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 63),
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(patternEntityName),
+						"must follow Backstage format restrictions",
+					),
+				}},
+				"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace, Validators: []validator.String{
+					stringvalidator.LengthBetween(1, 63),
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(patternEntityName),
+						"must follow Backstage format restrictions",
+					),
+				}},
+				"api_version": schema.StringAttribute{Optional: true, Description: descriptionEntityApiVersion},
+				"kind":        schema.StringAttribute{Computed: true, Description: descriptionEntityKind},
+				"metadata": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
+					"uid":         schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+					"etag":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataEtag},
+					"name":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataName},
+					"namespace":   schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace},
+					"title":       schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataTitle},
+					"description": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataDescription},
+					"labels":      schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataLabels, ElementType: types.StringType},
+					"annotations": schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataAnnotations, ElementType: types.StringType},
+					"tags":        schema.ListAttribute{Optional: true, Description: descriptionEntityMetadataTags, ElementType: types.StringType},
+					"links": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityMetadataLinks, NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"url":   schema.StringAttribute{Optional: true, Description: descriptionEntityLinkURL},
+							"title": schema.StringAttribute{Optional: true, Description: descriptionEntityLinkTitle},
+							"icon":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkIco},
+							"type":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkType},
+						},
+					}},
+				}},
+				"relations": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityRelations, NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"type":       schema.StringAttribute{Optional: true, Description: descriptionEntityRelationType},
+						"target_ref": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetRef},
+						"target": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityRelationTarget,
+							Attributes: map[string]schema.Attribute{
+								"name":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetName},
+								"kind":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetKind},
+								"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetNamespace},
+							}},
+					},
+				}},
+				"spec": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
+					"type":     schema.StringAttribute{Optional: true, Description: descriptionLocationSpecType},
+					"target":   schema.StringAttribute{Optional: true, Description: descriptionLocationSpecTarget},
+					"targets":  schema.ListAttribute{Optional: true, Description: descriptionLocationSpecTargets, ElementType: types.StringType},
+					"presence": schema.StringAttribute{Optional: true, Description: descriptionLocationSpecPresence},
+				}},
+			}},
 		},
 	}
 }
@@ -152,76 +221,101 @@ func (d *locationDataSource) Read(ctx context.Context, req datasource.ReadReques
 	tflog.Debug(ctx, fmt.Sprintf("Getting Location kind %s/%s from Backstage API", state.Name.ValueString(), state.Namespace.ValueString()))
 	location, response, err := d.client.Catalog.Locations.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Backstage Location kind",
-			fmt.Sprintf("Could not read Backstage Location kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error()),
-		)
-		return
+		const shortErr = "Error reading Backstage Location kind"
+		longErr := fmt.Sprintf("Could not read Backstage Location kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error())
+		if state.Fallback == nil {
+			resp.Diagnostics.AddError(shortErr, longErr)
+			return
+		}
+		resp.Diagnostics.AddWarning(shortErr, longErr)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		resp.Diagnostics.AddError(
-			"Error reading Backstage Location kind",
-			fmt.Sprintf("Could not read Backstage Location kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status),
-		)
-		return
+		const shortErr = "Error reading Backstage Location kind"
+		longErr := fmt.Sprintf("Could not read Backstage Location kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status)
+		if state.Fallback == nil {
+			resp.Diagnostics.AddError(shortErr, longErr)
+			return
+		}
+		resp.Diagnostics.AddWarning(shortErr, longErr)
+	}
+	if (err != nil || response.StatusCode != http.StatusOK) && state.Fallback != nil {
+		if state.Fallback.ID.IsNull() {
+			state.Fallback.ID = types.StringValue("123456789")
+		}
+		if state.Fallback.ApiVersion.IsNull() {
+			state.Fallback.ApiVersion = types.StringValue("backstage.io/v1alpha1")
+		}
+		if state.Fallback.Kind.IsNull() {
+			state.Fallback.Kind = types.StringValue(backstage.KindLocation)
+		}
+		state.ID = state.Fallback.ID
+		state.Name = state.Fallback.Name
+		state.Namespace = state.Fallback.Namespace
+		state.ApiVersion = state.Fallback.ApiVersion
+		state.Kind = state.Fallback.Kind
+		state.Metadata = state.Fallback.Metadata
+		state.Relations = state.Fallback.Relations
+		state.Spec = state.Fallback.Spec
 	}
 
-	state.ID = types.StringValue(location.Metadata.UID)
-	state.ApiVersion = types.StringValue(location.ApiVersion)
-	state.Kind = types.StringValue(location.Kind)
+	if err == nil && response.StatusCode == http.StatusOK {
+		state.ID = types.StringValue(location.Metadata.UID)
+		state.ApiVersion = types.StringValue(location.ApiVersion)
+		state.Kind = types.StringValue(location.Kind)
 
-	for _, i := range location.Relations {
-		state.Relations = append(state.Relations, entityRelationModel{
-			Type:      types.StringValue(i.Type),
-			TargetRef: types.StringValue(i.TargetRef),
-			Target: &entityRelationTargetModel{
-				Kind:      types.StringValue(i.Target.Kind),
-				Name:      types.StringValue(i.Target.Name),
-				Namespace: types.StringValue(i.Target.Namespace)},
-		})
-	}
+		for _, i := range location.Relations {
+			state.Relations = append(state.Relations, entityRelationModel{
+				Type:      types.StringValue(i.Type),
+				TargetRef: types.StringValue(i.TargetRef),
+				Target: &entityRelationTargetModel{
+					Kind:      types.StringValue(i.Target.Kind),
+					Name:      types.StringValue(i.Target.Name),
+					Namespace: types.StringValue(i.Target.Namespace)},
+			})
+		}
 
-	state.Spec = &locationSpecModel{
-		Type:     types.StringValue(location.Spec.Type),
-		Target:   types.StringValue(location.Spec.Target),
-		Presence: types.StringValue(location.Spec.Presence),
-	}
+		state.Spec = &locationSpecModel{
+			Type:     types.StringValue(location.Spec.Type),
+			Target:   types.StringValue(location.Spec.Target),
+			Presence: types.StringValue(location.Spec.Presence),
+		}
 
-	for _, i := range location.Spec.Targets {
-		state.Spec.Targets = append(state.Spec.Targets, types.StringValue(i))
-	}
+		for _, i := range location.Spec.Targets {
+			state.Spec.Targets = append(state.Spec.Targets, types.StringValue(i))
+		}
 
-	state.Metadata = &entityMetadataModel{
-		UID:         types.StringValue(location.Metadata.UID),
-		Etag:        types.StringValue(location.Metadata.Etag),
-		Name:        types.StringValue(location.Metadata.Name),
-		Namespace:   types.StringValue(location.Metadata.Namespace),
-		Title:       types.StringValue(location.Metadata.Title),
-		Description: types.StringValue(location.Metadata.Description),
-		Annotations: map[string]string{},
-		Labels:      map[string]string{},
-	}
+		state.Metadata = &entityMetadataModel{
+			UID:         types.StringValue(location.Metadata.UID),
+			Etag:        types.StringValue(location.Metadata.Etag),
+			Name:        types.StringValue(location.Metadata.Name),
+			Namespace:   types.StringValue(location.Metadata.Namespace),
+			Title:       types.StringValue(location.Metadata.Title),
+			Description: types.StringValue(location.Metadata.Description),
+			Annotations: map[string]string{},
+			Labels:      map[string]string{},
+		}
 
-	for k, v := range location.Metadata.Labels {
-		state.Metadata.Labels[k] = v
-	}
+		for k, v := range location.Metadata.Labels {
+			state.Metadata.Labels[k] = v
+		}
 
-	for k, v := range location.Metadata.Annotations {
-		state.Metadata.Annotations[k] = v
-	}
+		for k, v := range location.Metadata.Annotations {
+			state.Metadata.Annotations[k] = v
+		}
 
-	for _, v := range location.Metadata.Tags {
-		state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
-	}
+		for _, v := range location.Metadata.Tags {
+			state.Metadata.Tags = append(state.Metadata.Tags, types.StringValue(v))
+		}
 
-	for _, v := range location.Metadata.Links {
-		state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
-			URL:   types.StringValue(v.URL),
-			Title: types.StringValue(v.Title),
-			Icon:  types.StringValue(v.Icon),
-			Type:  types.StringValue(v.Type),
-		})
+		for _, v := range location.Metadata.Links {
+			state.Metadata.Links = append(state.Metadata.Links, entityLinkModel{
+				URL:   types.StringValue(v.URL),
+				Title: types.StringValue(v.Title),
+				Icon:  types.StringValue(v.Icon),
+				Type:  types.StringValue(v.Type),
+			})
+		}
 	}
 
 	diags := resp.State.Set(ctx, state)
