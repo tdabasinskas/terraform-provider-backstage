@@ -1,4 +1,4 @@
-module github.com/tdabasinskas/terraform-provider-backstage
+module github.com/datolabs-io/terraform-provider-backstage
 
 go 1.23
 

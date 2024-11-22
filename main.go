@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 
-	provider "github.com/tdabasinskas/terraform-provider-backstage/backstage"
+	provider "github.com/datolabs-io/terraform-provider-backstage/backstage"
 )
 
 //go:generate terraform fmt -recursive ./examples/
@@ -22,7 +22,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/tdabasinskas/backstage",
+		Address: "registry.terraform.io/datolabs-io/backstage",
 		Debug:   debug,
 	}
 
