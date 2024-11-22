@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/datolabs-io/go-backstage/v3"
+	"github.com/datolabs-io/terraform-provider-backstage/internal/transport"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -20,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/tdabasinskas/terraform-provider-backstage/internal/transport"
 )
 
 var _ provider.Provider = &backstageProvider{}
@@ -72,7 +72,7 @@ func (p *backstageProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 			"Use the navigation on the left to read about the available resources and data sources.\n\n To learn the basic of Terraform using this provider, " +
 			"follow hands-on [get started tutorials](https://learn.hashicorp.com/tutorials/terraform/infrastructure-as-code).\n\n" +
 			"Interested in the provider's latest features, or want to make sure you're up to date? Check out the " +
-			"[releases](https://github.com/tdabasinskas/terraform-provider-backstage/releases) for version information and release notes.",
+			"[releases](https://github.com/datolabs-io/terraform-provider-backstage/releases) for version information and release notes.",
 		Attributes: map[string]schema.Attribute{
 			"base_url": schema.StringAttribute{Optional: true, MarkdownDescription: descriptionProviderBaseURL, Validators: []validator.String{
 				stringvalidator.RegexMatches(regexp.MustCompile(patternURL), "must be a valid URL"),

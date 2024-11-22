@@ -28,3 +28,8 @@ jsondecode
 tfplugindocs
 retryablehttp
 retryable
+gock
+stretchr
+ghaction
+covermode
+coverprofile
