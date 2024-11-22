@@ -229,6 +229,12 @@ func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		if state.Fallback.ID.IsNull() {
 			state.Fallback.ID = types.StringValue("123456789")
 		}
+		if state.Fallback.ApiVersion.IsNull() {
+			state.Fallback.ApiVersion = types.StringValue("backstage.io/v1alpha1")
+		}
+		if state.Fallback.Kind.IsNull() {
+			state.Fallback.Kind = types.StringValue(backstage.KindDomain)
+		}
 		state.ID = state.Fallback.ID
 		state.Name = state.Fallback.Name
 		state.Namespace = state.Fallback.Namespace

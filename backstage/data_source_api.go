@@ -245,6 +245,12 @@ func (d *apiDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		if state.Fallback.ID.IsNull() {
 			state.Fallback.ID = types.StringValue("123456789")
 		}
+		if state.Fallback.ApiVersion.IsNull() {
+			state.Fallback.ApiVersion = types.StringValue("backstage.io/v1alpha1")
+		}
+		if state.Fallback.Kind.IsNull() {
+			state.Fallback.Kind = types.StringValue(backstage.KindAPI)
+		}
 		state.ID = state.Fallback.ID
 		state.Name = state.Fallback.Name
 		state.Namespace = state.Fallback.Namespace
@@ -253,7 +259,6 @@ func (d *apiDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		state.Metadata = state.Fallback.Metadata
 		state.Relations = state.Fallback.Relations
 		state.Spec = state.Fallback.Spec
-		state.Fallback = nil
 	}
 	if err == nil && response.StatusCode == http.StatusOK {
 		state.ID = types.StringValue(api.Metadata.UID)

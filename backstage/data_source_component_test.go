@@ -44,17 +44,16 @@ func TestAccDataSourceComponent_WithFallback(t *testing.T) {
 						namespace = "default"
 						fallback = {
 							id = "123456"
-							kind = "Component"
+							kind = "MyOwnComponent"
 							name = "fallback_component"
 							namespace = "default"
 						}
 					}
 				`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.backstage_component.test", "kind", "Component"),
+					resource.TestCheckResourceAttr("data.backstage_component.test", "kind", "MyOwnComponent"),
 					resource.TestCheckResourceAttr("data.backstage_component.test", "name", "fallback_component"),
-					resource.TestCheckNoResourceAttr("data.backstage_component.test", "api_version"),
-					resource.TestCheckNoResourceAttr("data.backstage_component.test", "api_version"),
+					resource.TestCheckResourceAttr("data.backstage_component.test", "api_version", "backstage.io/v1alpha1"),
 					resource.TestCheckNoResourceAttr("data.backstage_component.test", "metadata"),
 				),
 			},
