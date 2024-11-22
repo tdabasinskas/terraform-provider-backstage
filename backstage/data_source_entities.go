@@ -30,9 +30,10 @@ type entityDataSource struct {
 }
 
 type entityDataSourceModel struct {
-	ID       types.String  `tfsdk:"id"`
-	Filters  []string      `tfsdk:"filters"`
-	Entities []entityModel `tfsdk:"entities"`
+	ID       types.String         `tfsdk:"id"`
+	Filters  []string             `tfsdk:"filters"`
+	Entities []entityModel        `tfsdk:"entities"`
+	Fallback *entityFallbackModel `tfsdk:"fallback"`
 }
 
 type entityModel struct {
@@ -75,6 +76,12 @@ type entityLinkModel struct {
 	Type  types.String `tfsdk:"type"`
 }
 
+type entityFallbackModel struct {
+	ID       types.String  `tfsdk:"id"`
+	Filters  []string      `tfsdk:"filters"`
+	Entities []entityModel `tfsdk:"entities"`
+}
+
 const (
 	patternEntityName                  = `^[a-zA-Z0-9\-_\.]*$`
 	descriptionEntityFilters           = "A set of conditions that can be used to filter entities."
@@ -108,6 +115,7 @@ const (
 	descriptionEntityRelationTargetName      = "Name of the entity."
 	descriptionEntityRelationTargetKind      = "The high level entity type being described."
 	descriptionEntityRelationTargetNamespace = "Namespace that the target entity belongs to."
+	descriptionEntityFallback                = "A complete replica of the `Entity` as it would exist in backstage. Set this to provide a fallback in case the Backstage instance is not functioning, is down, or is unrealiable."
 )
 
 // Metadata returns the data source type name.
@@ -163,6 +171,48 @@ func (d *entityDataSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 					}},
 				},
 			}},
+			"fallback": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityFallback, Attributes: map[string]schema.Attribute{
+				"id":      schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+				"filters": schema.ListAttribute{Required: true, Description: descriptionEntityFilters, ElementType: types.StringType},
+				"entities": schema.ListNestedAttribute{Optional: true, Description: descriptionEntitySpec, NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"api_version": schema.StringAttribute{Optional: true, Description: descriptionEntityApiVersion},
+						"spec":        schema.StringAttribute{Optional: true, Description: descriptionEntitySpecJson, CustomType: jsontypes.NormalizedType{}},
+						"kind":        schema.StringAttribute{Optional: true, Description: descriptionEntityKind},
+						"metadata": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
+							"uid":         schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+							"etag":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataEtag},
+							"name":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataName},
+							"namespace":   schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace},
+							"title":       schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataTitle},
+							"description": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataDescription},
+							"labels":      schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataLabels, ElementType: types.StringType},
+							"annotations": schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataAnnotations, ElementType: types.StringType},
+							"tags":        schema.ListAttribute{Optional: true, Description: descriptionEntityMetadataTags, ElementType: types.StringType},
+							"links": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityMetadataLinks, NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"url":   schema.StringAttribute{Optional: true, Description: descriptionEntityLinkURL},
+									"title": schema.StringAttribute{Optional: true, Description: descriptionEntityLinkTitle},
+									"icon":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkIco},
+									"type":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkType},
+								},
+							}},
+						}},
+						"relations": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityRelations, NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"type":       schema.StringAttribute{Optional: true, Description: descriptionEntityRelationType},
+								"target_ref": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetRef},
+								"target": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityRelationTarget,
+									Attributes: map[string]schema.Attribute{
+										"name":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetName},
+										"kind":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetKind},
+										"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetNamespace},
+									}},
+							},
+						}},
+					},
+				}},
+			}},
 		},
 	}
 }
@@ -191,83 +241,94 @@ func (d *entityDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		Order:   []backstage.ListEntityOrder{{Field: "metadata.name", Direction: "asc"}},
 	})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Backstage entities",
-			fmt.Sprintf("Could not read Backstage entities %v: %s", state.Filters, err.Error()),
-		)
-		return
+		const shortErr = "Error reading Backstage entities"
+		longErr := fmt.Sprintf("Could not read Backstage entities %v: %s", state.Filters, err.Error())
+		if state.Fallback == nil {
+			resp.Diagnostics.AddError(shortErr, longErr)
+			return
+		}
+		resp.Diagnostics.AddWarning(shortErr, longErr)
 	}
 
 	if response.StatusCode != http.StatusOK {
-		resp.Diagnostics.AddError(
-			"Error reading Backstage entities",
-			fmt.Sprintf("Could not read Backstage entities %v: %s", state.Filters, response.Status),
-		)
-		return
+		const shortErr = "Error reading Backstage entities"
+		longErr := fmt.Sprintf("Could not read Backstage entities %v: %s", state.Filters, response.Status)
+		if state.Fallback == nil {
+			resp.Diagnostics.AddError(shortErr, longErr)
+			return
+		}
+		resp.Diagnostics.AddWarning(shortErr, longErr)
+	}
+	if (err != nil || response.StatusCode != http.StatusOK) && state.Fallback != nil {
+		state.ID = state.Fallback.ID
+		state.Filters = state.Fallback.Filters
+		state.Entities = state.Fallback.Entities
 	}
 
-	state.ID = types.StringValue(fmt.Sprint(state.Filters))
+	if err == nil && response.StatusCode == http.StatusOK {
+		state.ID = types.StringValue(fmt.Sprint(state.Filters))
 
-	for _, e := range entities {
-		v, err := json.Marshal(e.Spec)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error parsing Backstage entity specs",
-				fmt.Sprintf("Could not parse Specs for Backstage entity %v: %s", e.Metadata.Name, err.Error()),
-			)
-			continue
+		for _, e := range entities {
+			v, err := json.Marshal(e.Spec)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error parsing Backstage entity specs",
+					fmt.Sprintf("Could not parse Specs for Backstage entity %v: %s", e.Metadata.Name, err.Error()),
+				)
+				continue
+			}
+
+			entity := entityModel{
+				ApiVersion: types.StringValue(e.ApiVersion),
+				Kind:       types.StringValue(e.Kind),
+				Spec:       jsontypes.NewNormalizedValue(string(v)),
+			}
+
+			for _, i := range e.Relations {
+				entity.Relations = append(entity.Relations, entityRelationModel{
+					Type:      types.StringValue(i.Type),
+					TargetRef: types.StringValue(i.TargetRef),
+					Target: &entityRelationTargetModel{
+						Kind:      types.StringValue(i.Target.Kind),
+						Name:      types.StringValue(i.Target.Name),
+						Namespace: types.StringValue(i.Target.Namespace)},
+				})
+			}
+
+			entity.Metadata = &entityMetadataModel{
+				UID:         types.StringValue(e.Metadata.UID),
+				Etag:        types.StringValue(e.Metadata.Etag),
+				Name:        types.StringValue(e.Metadata.Name),
+				Namespace:   types.StringValue(e.Metadata.Namespace),
+				Title:       types.StringValue(e.Metadata.Title),
+				Description: types.StringValue(e.Metadata.Description),
+				Annotations: map[string]string{},
+				Labels:      map[string]string{},
+			}
+
+			for k, v := range e.Metadata.Labels {
+				entity.Metadata.Labels[k] = v
+			}
+
+			for k, v := range e.Metadata.Annotations {
+				entity.Metadata.Annotations[k] = v
+			}
+
+			for _, v := range e.Metadata.Tags {
+				entity.Metadata.Tags = append(entity.Metadata.Tags, types.StringValue(v))
+			}
+
+			for _, v := range e.Metadata.Links {
+				entity.Metadata.Links = append(entity.Metadata.Links, entityLinkModel{
+					URL:   types.StringValue(v.URL),
+					Title: types.StringValue(v.Title),
+					Icon:  types.StringValue(v.Icon),
+					Type:  types.StringValue(v.Type),
+				})
+			}
+
+			state.Entities = append(state.Entities, entity)
 		}
-
-		entity := entityModel{
-			ApiVersion: types.StringValue(e.ApiVersion),
-			Kind:       types.StringValue(e.Kind),
-			Spec:       jsontypes.NewNormalizedValue(string(v)),
-		}
-
-		for _, i := range e.Relations {
-			entity.Relations = append(entity.Relations, entityRelationModel{
-				Type:      types.StringValue(i.Type),
-				TargetRef: types.StringValue(i.TargetRef),
-				Target: &entityRelationTargetModel{
-					Kind:      types.StringValue(i.Target.Kind),
-					Name:      types.StringValue(i.Target.Name),
-					Namespace: types.StringValue(i.Target.Namespace)},
-			})
-		}
-
-		entity.Metadata = &entityMetadataModel{
-			UID:         types.StringValue(e.Metadata.UID),
-			Etag:        types.StringValue(e.Metadata.Etag),
-			Name:        types.StringValue(e.Metadata.Name),
-			Namespace:   types.StringValue(e.Metadata.Namespace),
-			Title:       types.StringValue(e.Metadata.Title),
-			Description: types.StringValue(e.Metadata.Description),
-			Annotations: map[string]string{},
-			Labels:      map[string]string{},
-		}
-
-		for k, v := range e.Metadata.Labels {
-			entity.Metadata.Labels[k] = v
-		}
-
-		for k, v := range e.Metadata.Annotations {
-			entity.Metadata.Annotations[k] = v
-		}
-
-		for _, v := range e.Metadata.Tags {
-			entity.Metadata.Tags = append(entity.Metadata.Tags, types.StringValue(v))
-		}
-
-		for _, v := range e.Metadata.Links {
-			entity.Metadata.Links = append(entity.Metadata.Links, entityLinkModel{
-				URL:   types.StringValue(v.URL),
-				Title: types.StringValue(v.Title),
-				Icon:  types.StringValue(v.Icon),
-				Type:  types.StringValue(v.Type),
-			})
-		}
-
-		state.Entities = append(state.Entities, entity)
 	}
 
 	diags := resp.State.Set(ctx, state)
