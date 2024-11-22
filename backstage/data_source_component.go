@@ -73,7 +73,7 @@ const (
 	descriptionComponentSpecConsumesAPIs   = "An array of entity references to the APIs that are consumed by the component."
 	descriptionComponentSpecDependsOn      = "An array of entity references to the components and resources that the component depends on."
 	descriptionComponentSpecSystem         = "An entity reference to the system that the component belongs to."
-	descriptionComponentFallback           = "A full entity object that represents the Component as it would exist in backstage. Set this to provide a fallback in case the Component is not functioning, is down, or is unrealiable."
+	descriptionComponentFallback           = "A complete replica of the `Component` as it would exist in backstage. Set this to provide a fallback in case the Backstage instance is not functioning, is down, or is unrealiable."
 )
 
 // Metadata returns the data source type name.
@@ -145,64 +145,64 @@ func (d *componentDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				"depends_on":      schema.ListAttribute{Computed: true, Description: descriptionComponentSpecDependsOn, ElementType: types.StringType},
 				"system":          schema.StringAttribute{Computed: true, Description: descriptionComponentSpecSystem},
 			}},
-			"fallback": schema.SingleNestedAttribute{Computed: true, Optional: true, Description: descriptionComponentFallback, Attributes: map[string]schema.Attribute{
-				"id": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataUID},
-				"name": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataName, Validators: []validator.String{
+			"fallback": schema.SingleNestedAttribute{Optional: true, Description: descriptionComponentFallback, Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+				"name": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataName, Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 63),
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(patternEntityName),
 						"must follow Backstage format restrictions",
 					),
 				}},
-				"namespace": schema.StringAttribute{Optional: true, Computed: true, Description: descriptionEntityMetadataNamespace, Validators: []validator.String{
+				"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace, Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 63),
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(patternEntityName),
 						"must follow Backstage format restrictions",
 					),
 				}},
-				"api_version": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityApiVersion},
-				"kind":        schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityKind},
-				"metadata": schema.SingleNestedAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
-					"uid":         schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataUID},
-					"etag":        schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataEtag},
-					"name":        schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataName},
-					"namespace":   schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataNamespace},
-					"title":       schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataTitle},
-					"description": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataDescription},
-					"labels":      schema.MapAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataLabels, ElementType: types.StringType},
-					"annotations": schema.MapAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataAnnotations, ElementType: types.StringType},
-					"tags":        schema.ListAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataTags, ElementType: types.StringType},
-					"links": schema.ListNestedAttribute{Computed: true, Optional: true, Description: descriptionEntityMetadataLinks, NestedObject: schema.NestedAttributeObject{
+				"api_version": schema.StringAttribute{Optional: true, Description: descriptionEntityApiVersion},
+				"kind":        schema.StringAttribute{Optional: true, Description: descriptionEntityKind},
+				"metadata": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
+					"uid":         schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
+					"etag":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataEtag},
+					"name":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataName},
+					"namespace":   schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataNamespace},
+					"title":       schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataTitle},
+					"description": schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataDescription},
+					"labels":      schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataLabels, ElementType: types.StringType},
+					"annotations": schema.MapAttribute{Optional: true, Description: descriptionEntityMetadataAnnotations, ElementType: types.StringType},
+					"tags":        schema.ListAttribute{Optional: true, Description: descriptionEntityMetadataTags, ElementType: types.StringType},
+					"links": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityMetadataLinks, NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
-							"url":   schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityLinkURL},
-							"title": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityLinkTitle},
-							"icon":  schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityLinkIco},
-							"type":  schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityLinkType},
+							"url":   schema.StringAttribute{Optional: true, Description: descriptionEntityLinkURL},
+							"title": schema.StringAttribute{Optional: true, Description: descriptionEntityLinkTitle},
+							"icon":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkIco},
+							"type":  schema.StringAttribute{Optional: true, Description: descriptionEntityLinkType},
 						},
 					}},
 				}},
-				"relations": schema.ListNestedAttribute{Computed: true, Optional: true, Description: descriptionEntityRelations, NestedObject: schema.NestedAttributeObject{
+				"relations": schema.ListNestedAttribute{Optional: true, Description: descriptionEntityRelations, NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"type":       schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityRelationType},
-						"target_ref": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityRelationTargetRef},
-						"target": schema.SingleNestedAttribute{Computed: true, Optional: true, Description: descriptionEntityRelationTarget,
+						"type":       schema.StringAttribute{Optional: true, Description: descriptionEntityRelationType},
+						"target_ref": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetRef},
+						"target": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityRelationTarget,
 							Attributes: map[string]schema.Attribute{
-								"name":      schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityRelationTargetName},
-								"kind":      schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityRelationTargetKind},
-								"namespace": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionEntityRelationTargetNamespace},
+								"name":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetName},
+								"kind":      schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetKind},
+								"namespace": schema.StringAttribute{Optional: true, Description: descriptionEntityRelationTargetNamespace},
 							}},
 					},
 				}},
-				"spec": schema.SingleNestedAttribute{Computed: true, Optional: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
-					"type":            schema.StringAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecType},
-					"lifecycle":       schema.StringAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecLifecycle},
-					"owner":           schema.StringAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecOwner},
-					"subcomponent_of": schema.StringAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecSubcomponentOf},
-					"provides_apis":   schema.ListAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecProvidesAPIs, ElementType: types.StringType},
-					"consumes_apis":   schema.ListAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecConsumesAPIs, ElementType: types.StringType},
-					"depends_on":      schema.ListAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecDependsOn, ElementType: types.StringType},
-					"system":          schema.StringAttribute{Computed: true, Optional: true, Description: descriptionComponentSpecSystem},
+				"spec": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntitySpec, Attributes: map[string]schema.Attribute{
+					"type":            schema.StringAttribute{Optional: true, Description: descriptionComponentSpecType},
+					"lifecycle":       schema.StringAttribute{Optional: true, Description: descriptionComponentSpecLifecycle},
+					"owner":           schema.StringAttribute{Optional: true, Description: descriptionComponentSpecOwner},
+					"subcomponent_of": schema.StringAttribute{Optional: true, Description: descriptionComponentSpecSubcomponentOf},
+					"provides_apis":   schema.ListAttribute{Optional: true, Description: descriptionComponentSpecProvidesAPIs, ElementType: types.StringType},
+					"consumes_apis":   schema.ListAttribute{Optional: true, Description: descriptionComponentSpecConsumesAPIs, ElementType: types.StringType},
+					"depends_on":      schema.ListAttribute{Optional: true, Description: descriptionComponentSpecDependsOn, ElementType: types.StringType},
+					"system":          schema.StringAttribute{Optional: true, Description: descriptionComponentSpecSystem},
 				}},
 			}},
 		},
@@ -235,22 +235,22 @@ func (d *componentDataSource) Read(ctx context.Context, req datasource.ReadReque
 	component, response, err := d.client.Catalog.Components.Get(ctx, state.Name.ValueString(), state.Namespace.ValueString())
 	if err != nil {
 		const shortErr = "Error reading Backstage Component kind"
-		description := fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error())
+		longErr := fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), err.Error())
 		if state.Fallback == nil {
-			resp.Diagnostics.AddError(shortErr, description)
+			resp.Diagnostics.AddError(shortErr, longErr)
 			return
 		}
-		resp.Diagnostics.AddWarning(shortErr, description)
+		resp.Diagnostics.AddWarning(shortErr, longErr)
 	}
 
 	if response.StatusCode != http.StatusOK {
 		const shortErr = "Error reading Backstage Component kind"
-		description := fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status)
+		longErr := fmt.Sprintf("Could not read Backstage Component kind %s/%s: %s", state.Namespace.ValueString(), state.Name.ValueString(), response.Status)
 		if state.Fallback == nil {
-			resp.Diagnostics.AddError(shortErr, description)
+			resp.Diagnostics.AddError(shortErr, longErr)
 			return
 		}
-		resp.Diagnostics.AddWarning(shortErr, description)
+		resp.Diagnostics.AddWarning(shortErr, longErr)
 	}
 	if (err != nil || response.StatusCode != http.StatusOK) && state.Fallback != nil {
 		state.ID = state.Fallback.ID

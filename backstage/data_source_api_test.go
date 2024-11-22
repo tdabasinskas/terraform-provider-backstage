@@ -47,6 +47,11 @@ func TestAccApiDataSource_WithFallback(t *testing.T) {
 							id = "123456"
                             name = "fallback_api"
                             namespace = "default"
+							metadata = {
+								labels = {
+									"key" = "value"
+								}
+							}
                             spec = {
                                 type = "openapi"
                                 lifecycle = "production"
@@ -65,6 +70,7 @@ func TestAccApiDataSource_WithFallback(t *testing.T) {
 					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.owner", "team-a"),
 					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.definition", "https://example.com/api-spec"),
 					resource.TestCheckResourceAttr("data.backstage_api.test", "spec.system", "system-x"),
+					resource.TestCheckResourceAttr("data.backstage_api.test", "metadata.labels.key", "value"),
 				),
 			},
 		},
