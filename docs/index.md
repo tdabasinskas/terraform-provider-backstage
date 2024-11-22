@@ -6,7 +6,7 @@ description: |-
   Use Backstage provider to interact with the resources supported by Backstage https://backstage.io. You must configure the provider with proper base URL of your Backstage instance before you can use it.
   Use the navigation on the left to read about the available resources and data sources.
   To learn the basic of Terraform using this provider, follow hands-on get started tutorials https://learn.hashicorp.com/tutorials/terraform/infrastructure-as-code.
-  Interested in the provider's latest features, or want to make sure you're up to date? Check out the releases https://github.com/tdabasinskas/terraform-provider-backstage/releases for version information and release notes.
+  Interested in the provider's latest features, or want to make sure you're up to date? Check out the releases https://github.com/datolabs-io/terraform-provider-backstage/releases for version information and release notes.
 ---
 
 # backstage Provider
@@ -17,7 +17,7 @@ Use the navigation on the left to read about the available resources and data so
 
  To learn the basic of Terraform using this provider, follow hands-on [get started tutorials](https://learn.hashicorp.com/tutorials/terraform/infrastructure-as-code).
 
-Interested in the provider's latest features, or want to make sure you're up to date? Check out the [releases](https://github.com/tdabasinskas/terraform-provider-backstage/releases) for version information and release notes.
+Interested in the provider's latest features, or want to make sure you're up to date? Check out the [releases](https://github.com/datolabs-io/terraform-provider-backstage/releases) for version information and release notes.
 
 ## Example Usage
 
