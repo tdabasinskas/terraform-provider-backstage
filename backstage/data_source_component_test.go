@@ -40,7 +40,7 @@ func TestAccDataSourceComponent_WithFallback(t *testing.T) {
 			{
 				Config: `
 					data "backstage_component" "test" {
-						name = "non_existent_component"
+						name = "non_existent_component_a9ab8"
 						namespace = "default"
 						fallback = {
 							id = "123456"

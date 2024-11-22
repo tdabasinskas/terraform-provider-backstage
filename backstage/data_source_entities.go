@@ -260,6 +260,9 @@ func (d *entityDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 		resp.Diagnostics.AddWarning(shortErr, longErr)
 	}
 	if (err != nil || response.StatusCode != http.StatusOK) && state.Fallback != nil {
+		if state.Fallback.ID.IsNull() {
+			state.Fallback.ID = types.StringValue("123456789")
+		}
 		state.ID = state.Fallback.ID
 		state.Filters = state.Fallback.Filters
 		state.Entities = state.Fallback.Entities

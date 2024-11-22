@@ -41,7 +41,7 @@ func TestAccApiDataSource_WithFallback(t *testing.T) {
 			{
 				Config: `
                     data "backstage_api" "test" {
-                        name = "non_existent_api"
+                        name = "non_existent_api_a9ab8"
                         namespace = "default"
                         fallback = {
 							id = "123456"

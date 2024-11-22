@@ -226,6 +226,9 @@ func (d *domainDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 	}
 
 	if (err != nil || response.StatusCode != http.StatusOK) && state.Fallback != nil {
+		if state.Fallback.ID.IsNull() {
+			state.Fallback.ID = types.StringValue("123456789")
+		}
 		state.ID = state.Fallback.ID
 		state.Name = state.Fallback.Name
 		state.Namespace = state.Fallback.Namespace

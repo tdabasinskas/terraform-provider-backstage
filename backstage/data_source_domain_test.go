@@ -39,7 +39,7 @@ func TestAccDataSourceDomain_WithFallback(t *testing.T) {
 			{
 				Config: `
 					data "backstage_domain" "test" {
-						name = "non_existent_domain"
+						name = "non_existent_domain_a9ab8"
 						namespace = "default"
 						fallback = {
 							id = "123456"
