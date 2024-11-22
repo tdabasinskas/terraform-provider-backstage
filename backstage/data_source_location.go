@@ -153,7 +153,7 @@ func (d *locationDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 					),
 				}},
 				"api_version": schema.StringAttribute{Optional: true, Description: descriptionEntityApiVersion},
-				"kind":        schema.StringAttribute{Computed: true, Description: descriptionEntityKind},
+				"kind":        schema.StringAttribute{Optional: true, Description: descriptionEntityKind},
 				"metadata": schema.SingleNestedAttribute{Optional: true, Description: descriptionEntityMetadata, Attributes: map[string]schema.Attribute{
 					"uid":         schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataUID},
 					"etag":        schema.StringAttribute{Optional: true, Description: descriptionEntityMetadataEtag},
