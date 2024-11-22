@@ -31,6 +31,7 @@ data "backstage_component" "example" {
 
 ### Optional
 
+- `fallback` (Attributes) A complete replica of the `Component` as it would exist in backstage. Set this to provide a fallback in case the Backstage instance is not functioning, is down, or is unrealiable. (see [below for nested schema](#nestedatt--fallback))
 - `namespace` (String) Namespace that the entity belongs to.
 
 ### Read-Only
@@ -41,6 +42,84 @@ data "backstage_component" "example" {
 - `metadata` (Attributes) Metadata fields common to all versions/kinds of entity. (see [below for nested schema](#nestedatt--metadata))
 - `relations` (Attributes List) Relations that this entity has with other entities (see [below for nested schema](#nestedatt--relations))
 - `spec` (Attributes) The specification data describing the entity itself. (see [below for nested schema](#nestedatt--spec))
+
+<a id="nestedatt--fallback"></a>
+### Nested Schema for `fallback`
+
+Optional:
+
+- `api_version` (String) Version of specification format for this particular entity that this is written against.
+- `id` (String) A globally unique ID for the entity. This field can not be set by the user at creation time, and the server will reject an attempt to do so. The field will be populated in read operations.
+- `kind` (String) The high level entity type being described.
+- `metadata` (Attributes) Metadata fields common to all versions/kinds of entity. (see [below for nested schema](#nestedatt--fallback--metadata))
+- `name` (String) Name of the entity.
+- `namespace` (String) Namespace that the entity belongs to.
+- `relations` (Attributes List) Relations that this entity has with other entities (see [below for nested schema](#nestedatt--fallback--relations))
+- `spec` (Attributes) The specification data describing the entity itself. (see [below for nested schema](#nestedatt--fallback--spec))
+
+<a id="nestedatt--fallback--metadata"></a>
+### Nested Schema for `fallback.metadata`
+
+Optional:
+
+- `annotations` (Map of String) Key/Value pairs of non-identifying auxiliary information attached to entity.
+- `description` (String) A short (typically relatively few words) description of the entity.
+- `etag` (String) An opaque string that changes for each update operation to any part of the entity, including metadata. This field can not be set by the user at creation time, and the server will reject an attempt to do so. The field will be populated in read operations.The field can (optionally) be specified when performing update or delete operations, and the server will then reject the operation if it does not match the current stored value.
+- `labels` (Map of String) Key/Value pairs of identifying information attached to the entity.
+- `links` (Attributes List) A list of external hyperlinks related to the entity. Links can provide additional contextual information that may be located outside of Backstage itself. For example, an admin dashboard or external CMS page. (see [below for nested schema](#nestedatt--fallback--metadata--links))
+- `name` (String) Name of the entity.
+- `namespace` (String) Namespace that the entity belongs to.
+- `tags` (List of String) A list of single-valued strings, to for example classify catalog entities in various ways.
+- `title` (String) A display name of the entity, to be presented in user interfaces instead of the name property, when available.
+- `uid` (String) A globally unique ID for the entity. This field can not be set by the user at creation time, and the server will reject an attempt to do so. The field will be populated in read operations.
+
+<a id="nestedatt--fallback--metadata--links"></a>
+### Nested Schema for `fallback.metadata.links`
+
+Optional:
+
+- `icon` (String) A key representing a visual icon to be displayed in the UI.
+- `title` (String) A user-friendly display name for the link.
+- `type` (String) An optional value to categorize links into specific groups.
+- `url` (String) URL in a standard uri format.
+
+
+
+<a id="nestedatt--fallback--relations"></a>
+### Nested Schema for `fallback.relations`
+
+Optional:
+
+- `target` (Attributes) The entity of the target of this relation. (see [below for nested schema](#nestedatt--fallback--relations--target))
+- `target_ref` (String) The entity ref of the target of this relation.
+- `type` (String) Type of the relation.
+
+<a id="nestedatt--fallback--relations--target"></a>
+### Nested Schema for `fallback.relations.target`
+
+Optional:
+
+- `kind` (String) The high level entity type being described.
+- `name` (String) Name of the entity.
+- `namespace` (String) Namespace that the target entity belongs to.
+
+
+
+<a id="nestedatt--fallback--spec"></a>
+### Nested Schema for `fallback.spec`
+
+Optional:
+
+- `consumes_apis` (List of String) An array of entity references to the APIs that are consumed by the component.
+- `depends_on` (List of String) An array of entity references to the components and resources that the component depends on.
+- `lifecycle` (String) Lifecycle state of the component.
+- `owner` (String) An entity reference to the owner of the component
+- `provides_apis` (List of String) An array of entity references to the APIs that are provided by the component.
+- `subcomponent_of` (String) An entity reference to another component of which the component is a part.
+- `system` (String) An entity reference to the system that the component belongs to.
+- `type` (String) Type of the component definition.
+
+
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
