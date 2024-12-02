@@ -28,7 +28,7 @@ most of the official documentation on developing this provider is also applicabl
 ### Requirements
 
 - [Terraform](https://www.terraform.io/downloads)
-- [Go](https://go.dev/doc/install) (1.22)
+- [Go](https://go.dev/doc/install) (1.23)
 - [GNU make](https://www.gnu.org/software/make/)
 - [Docker](https://docs.docker.com/get-docker/) (optional)
 
