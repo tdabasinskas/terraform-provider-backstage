@@ -14,6 +14,12 @@ In case of specific questions, please raise a GitHub issue in this repository.
 
 The remainder of this document will focus on the development aspects of the provider.
 
+## Modules
+
+Below is a list of open-source Terraform modules that utilize this provider:
+
+- [terraform-backstage-metadata-module](https://github.com/Silthus/terraform-backstage-metadata-module/tree/main) - a metadata wrapper module to fetch metadata for an entity from Backstage and compile a list of resource labels as output.
+
 ## Developing
 
 The repository and code is based on [Terraform Provider Scaffolding (Terraform Plugin Framework)](https://github.com/hashicorp/terraform-provider-scaffolding-framework), therefore
